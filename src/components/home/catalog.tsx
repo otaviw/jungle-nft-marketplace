@@ -1,8 +1,9 @@
+import { Link, useNavigate, useSearch } from '@tanstack/react-router'
 import { useQuery } from '@tanstack/react-query'
-import { useNavigate, useSearch } from '@tanstack/react-router'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { api } from '@/lib/api'
+import { CatalogFilters } from './catalog-filters'
 import type { NftListResponse } from '@/types/nft'
 
 export function Catalog() {
@@ -40,7 +41,9 @@ export function Catalog() {
                         const form = new FormData(event.currentTarget)
                         const q = String(form.get('q') ?? '').trim()
 
-                        void navigate({ search: { q, page: 1 } })
+                        void navigate({
+                            search: { ...search, q, page: 1 },
+                        })
                     }}
                 >
                     <label htmlFor="catalog-search" className="sr-only">
@@ -60,6 +63,8 @@ export function Catalog() {
                     <Button type="submit">Buscar</Button>
                 </form>
             </div>
+
+            <CatalogFilters />
 
             <p role="status" className="mb-4 min-h-5 text-xs text-muted-foreground">
                 {isPending
@@ -102,21 +107,28 @@ export function Catalog() {
                         <div className="grid grid-cols-2 gap-4 md:grid-cols-3 md:gap-8">
                             {data.items.map((nft) => (
                                 <article key={nft.id} className="min-w-0">
-                                    <div className="rounded-2xl bg-card p-2 md:rounded-none">
-                                        <img
-                                            src={nft.image}
-                                            alt={nft.name}
-                                            width={400}
-                                            height={400}
-                                            loading="lazy"
-                                            className="aspect-square w-full rounded-xl object-cover"
-                                        />
-                                    </div>
+                                    <Link
+                                        to="/nfts/$nftId"
+                                        params={{ nftId: nft.id }}
+                                        className="block rounded-xl"
+                                    >
 
-                                    <h3 className="mt-3 text-sm">{nft.name}</h3>
-                                    <p className="mt-1 font-bold text-primary">
-                                        {nft.price} ETH
-                                    </p>
+                                        <div className="rounded-2xl bg-card p-2 md:rounded-none">
+                                            <img
+                                                src={nft.image}
+                                                alt={nft.name}
+                                                width={400}
+                                                height={400}
+                                                loading="lazy"
+                                                className="aspect-square w-full rounded-xl object-cover"
+                                            />
+                                        </div>
+
+                                        <h3 className="mt-3 text-sm">{nft.name}</h3>
+                                        <p className="mt-1 font-bold text-primary">
+                                            {nft.price} ETH
+                                        </p>
+                                    </Link>
                                 </article>
                             ))}
                         </div>

@@ -1,3 +1,10 @@
+export interface NftEdition {
+    id: string
+    name: string
+    price: string
+    available: number
+}
+
 export interface Nft {
     id: string
     name: string
@@ -5,6 +12,7 @@ export interface Nft {
     price: string
     category: string
     network: string
+    editions: NftEdition[]
 }
 
 export interface NftListResponse {

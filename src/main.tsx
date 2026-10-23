@@ -8,8 +8,13 @@ import './index.css'
 
 async function bootstrap() {
   if (import.meta.env.VITE_ENABLE_MOCKS === 'true') {
+    const { seedAuth } = await import('./mocks/auth-store')
     const { worker } = await import('./mocks/browser')
+    const { restoreInventory } = await import('./mocks/order-store')
 
+    await seedAuth()
+    restoreInventory()
+    
     await worker.start({
       onUnhandledFrame: 'bypass',
     })

@@ -22,5 +22,19 @@ export const nfts: Nft[] = Array.from({ length: 24 }, (_, index) => {
         price: prices[index % prices.length],
         category: categories[index % categories.length],
         network: networks[index % networks.length],
+        editions: [
+            {
+                id: 'standard',
+                name: 'Edição padrão',
+                price: prices[index % prices.length],
+                available: 5,
+            },
+            {
+                id: 'limited',
+                name: 'Edição limitada',
+                price: '2.49',
+                available: index % 3 === 0 ? 0 : 2,
+            },
+        ],
     }
 })
