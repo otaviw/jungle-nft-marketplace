@@ -1,5 +1,6 @@
 import { Header } from '@/components/layout/header'
 import { Hero } from '@/components/home/hero'
+import { Catalog } from '@/components/home/catalog'
 
 function App() {
   return (
@@ -15,16 +16,7 @@ function App() {
 
       <main>
         <Hero />
-
-        <section
-          id="catalogo"
-          aria-labelledby="catalog-title"
-          className="mx-auto max-w-6xl px-5 py-12 md:px-8 md:py-20"
-        >
-          <h2 id="catalog-title" className="text-lg font-bold">
-            Todos os NFTs
-          </h2>
-        </section>
+        <Catalog />
       </main>
     </>
   )
