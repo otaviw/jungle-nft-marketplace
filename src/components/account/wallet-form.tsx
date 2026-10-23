@@ -113,9 +113,10 @@ export function WalletForm({ slot, wallet, userId }: Props) {
                     ))}
 
                     <label className="block text-sm">
-                        Rede
+                        <span id={`${slot}-network-label`}>Rede</span>
 
                         <select
+                            aria-labelledby={`${slot}-network-label`}
                             name="network"
                             defaultValue={wallet?.network ?? ''}
                             required
@@ -136,9 +137,10 @@ export function WalletForm({ slot, wallet, userId }: Props) {
                     </label>
 
                     <label className="block text-sm">
-                        Tipo de carteira
+                        <span id={`${slot}-provider-label`}>Tipo de carteira</span>
 
                         <select
+                            aria-labelledby={`${slot}-provider-label`}
                             name="provider"
                             defaultValue={wallet?.provider ?? ''}
                             required

@@ -7,7 +7,7 @@ import { syncCatalogState } from './catalog-state'
 import { nfts } from './fixtures'
 
 const socketLink = ws.link(
-    /wss?:\/\/[^/]+\/socket\.io\/.*$/,
+    /^wss?:\/\/[^/]+\/$/,
 )
 
 const authenticationSchema = z.object({
@@ -18,8 +18,31 @@ const subscriptionSchema = z.object({
     orderId: z.string().min(1),
 })
 
+const realtimeScenarioSchema = z.discriminatedUnion('action', [
+    z.object({
+        action: z.literal('probe'),
+        scope: z.enum(['catalog', 'order']),
+    }),
+    z.object({
+        action: z.literal('disconnect'),
+        scope: z.enum(['catalog', 'order']),
+    }),
+    z.object({
+        action: z.literal('order-event'),
+        orderId: z.string().min(1),
+        version: z.number().int().positive(),
+    }),
+])
+
 export const socketHandlers = [
     socketLink.addEventListener('connection', (connection) => {
+        const pathname = new URL(String(connection.client.url)).pathname
+
+        if (pathname !== '/socket.io/') {
+            connection.server.connect()
+            return
+        }
+
         const { client, rawClient } = toSocketIo(connection)
 
         let token = ''
@@ -28,6 +51,58 @@ export const socketHandlers = [
         let lastPing = Date.now()
         let catalogSubscribed = false
         const catalogVersions = new Map<string, number>()
+
+        function handleScenario(event: Event) {
+            if (!(event instanceof CustomEvent)) {
+                return
+            }
+
+            const result = realtimeScenarioSchema.safeParse(event.detail)
+
+            if (!result.success) {
+                return
+            }
+
+            const scenario = result.data
+
+            if (scenario.action === 'order-event') {
+                const session = getSession(token)
+
+                if (
+                    !session
+                    || !orderId
+                    || orderId !== scenario.orderId
+                ) {
+                    return
+                }
+
+                client.emit('order.updated', {
+                    id: `scenario:order:${orderId}:${scenario.version}`,
+                    resourceId: orderId,
+                    version: scenario.version,
+                    userId: session.user.id,
+                })
+
+                return
+            }
+
+            const matches = scenario.scope === 'catalog'
+                ? catalogSubscribed
+                : Boolean(orderId && getSession(token))
+
+            if (!matches) {
+                return
+            }
+
+            const detail = event.detail as { handled?: number }
+            detail.handled = (detail.handled ?? 0) + 1
+
+            if (scenario.action === 'disconnect') {
+                connection.client.close(1012, 'Interrupção simulada')
+            }
+        }
+
+        window.addEventListener('kurio:scenario:realtime', handleScenario)
 
         client.on('session.subscribe', (_event, payload: unknown) => {
             const result = authenticationSchema.safeParse(payload)
@@ -80,7 +155,10 @@ export const socketHandlers = [
                 lastPing = Date.now()
             }
 
-            if (catalogSubscribed) {
+            if (
+                catalogSubscribed
+                && localStorage.getItem('kurio:scenario:pause-catalog-events') !== 'true'
+            ) {
                 syncCatalogState()
 
                 for (const nft of nfts) {
@@ -142,6 +220,11 @@ export const socketHandlers = [
         }, 500)
 
         rawClient.addEventListener('close', () => {
+            window.removeEventListener(
+                'kurio:scenario:realtime',
+                handleScenario,
+            )
+
             clearInterval(timer)
             token = ''
             orderId = null

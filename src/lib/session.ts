@@ -30,21 +30,50 @@ export const sessionOptions = queryOptions({
     refetchInterval: 30_000,
 })
 
+function removePrivateQueries() {
+    const privateKeys = new Set([
+        'cart',
+        'profile',
+        'wallets',
+        'wallet-connection',
+        'favorites',
+        'orders',
+    ])
+
+    queryClient.removeQueries({
+        predicate: (query) => privateKeys.has(String(query.queryKey[0])),
+    })
+}
+
 export async function acceptSession(session: Session) {
     await queryClient.cancelQueries()
-    queryClient.clear()
+
+    removePrivateQueries()
 
     setAuthToken(session.token)
+
+    // Preserva a consulta e notifica seus observadores.
     queryClient.setQueryData(['session'], session)
 }
 
 export async function logout() {
+    const previousToken = getAuthToken()
+
     await api.post('/auth/logout')
 
-    await queryClient.cancelQueries()
-    queryClient.clear()
+    if (getAuthToken() !== previousToken) {
+        return
+    }
 
     clearAuthToken()
+
+    await queryClient.cancelQueries()
+
+    if (getAuthToken()) {
+        return
+    }
+
+    removePrivateQueries()
     queryClient.setQueryData(['session'], null)
 }
 
@@ -55,28 +84,13 @@ export async function expireClientSession(expectedToken: string) {
 
     clearAuthToken()
 
-    const privateKeys = new Set([
-        'session',
-        'cart',
-        'profile',
-        'wallets',
-        'wallet-connection',
-        'favorites',
-        'orders',
-    ])
-
-    await queryClient.cancelQueries({
-        predicate: (query) => privateKeys.has(String(query.queryKey[0])),
-    })
+    await queryClient.cancelQueries()
 
     if (getAuthToken()) {
         return false
     }
 
-    queryClient.removeQueries({
-        predicate: (query) => privateKeys.has(String(query.queryKey[0])),
-    })
-
+    removePrivateQueries()
     queryClient.setQueryData(['session'], null)
 
     return true

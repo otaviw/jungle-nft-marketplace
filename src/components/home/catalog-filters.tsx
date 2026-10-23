@@ -35,8 +35,10 @@ export function CatalogFilters() {
             }}
         >
             <label className="text-sm">
-                Coleção
+                <span id="catalog-category-label">Coleção</span>
+
                 <select
+                    aria-labelledby="catalog-category-label"
                     name="category"
                     defaultValue={search.category ?? ''}
                     className={selectClassName}
@@ -51,8 +53,10 @@ export function CatalogFilters() {
             </label>
 
             <label className="text-sm">
-                Rede
+                <span id="catalog-network-label">Rede</span>
+
                 <select
+                    aria-labelledby="catalog-network-label"
                     name="network"
                     defaultValue={search.network ?? ''}
                     className={selectClassName}
@@ -67,8 +71,10 @@ export function CatalogFilters() {
             </label>
 
             <label className="text-sm">
-                Ordenar por
+                <span id="catalog-sort-label">Ordenar por</span>
+
                 <select
+                    aria-labelledby="catalog-sort-label"
                     name="sort"
                     defaultValue={search.sort}
                     className={selectClassName}

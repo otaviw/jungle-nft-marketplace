@@ -70,9 +70,10 @@ export function PurchaseOptions({ nft }: { nft: Nft }) {
             }}
         >
             <label className="block text-sm">
-                Edição
+                <span id="nft-edition-label">Edição</span>
 
                 <select
+                    aria-labelledby="nft-edition-label"
                     value={editionId}
                     disabled={addItem.isPending}
                     className="mt-2 w-full rounded-md border border-input bg-background px-3 py-3"

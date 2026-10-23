@@ -111,7 +111,7 @@ export function CatalogRealtime() {
     return (
         <div
             role="status"
-            className="fixed right-4 bottom-24 left-4 z-50 mx-auto max-w-lg rounded-xl border border-border bg-card p-4 text-sm shadow-lg"
+            className="pointer-events-none fixed right-4 bottom-24 left-4 z-50 mx-auto max-w-lg rounded-xl border border-border bg-card p-4 text-sm shadow-lg"
         >
             <p>{message}</p>
             <button

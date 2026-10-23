@@ -276,10 +276,6 @@ export function CartPage() {
                                 </div>
                             </dl>
 
-                            <Button className="mt-6 w-full" disabled>
-                                Conectar e finalizar
-                            </Button>
-
                             <Link
                                 to="/checkout"
                                 className="mt-6 flex w-full items-center justify-center rounded-md bg-primary px-4 py-3 text-sm font-bold text-primary-foreground"
