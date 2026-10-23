@@ -130,7 +130,9 @@ export function ProfilePage() {
                                 <div className="grid gap-6 sm:grid-cols-2">
                                     {fields.map((field) => (
                                         <label key={field.name} className="block text-sm">
-                                            {field.label}
+                                            <span id={`profile-${field.name}-label`}>
+                                                {field.label}
+                                            </span>
                                             {field.required && (
                                                 <span aria-hidden="true" className="text-primary">
                                                     *

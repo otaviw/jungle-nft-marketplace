@@ -89,9 +89,11 @@ export function WalletForm({ slot, wallet, userId }: Props) {
                 <div className="grid gap-5 sm:grid-cols-2">
                     {fields.map((field) => (
                         <label key={field.name} className="block text-sm">
-                            {field.label}
-
+                            <span id={`${slot}-${field.name}-label`}>
+                                {field.label}
+                            </span>
                             <Input
+                                aria-labelledby={`${slot}-${field.name}-label`}
                                 name={field.name}
                                 type={field.name === 'email' ? 'email' : 'text'}
                                 required={field.required}

@@ -66,9 +66,12 @@ export function PasswordForm() {
             >
                 {fields.map((field) => (
                     <label key={field.name} className="block text-sm">
-                        {field.label}
+                        <span id={`password-${field.name}-label`}>
+                            {field.label}
+                        </span>
 
                         <Input
+                            aria-labelledby={`password-${field.name}-label`}
                             name={field.name}
                             type={visible ? 'text' : 'password'}
                             autoComplete={
