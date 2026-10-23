@@ -3,7 +3,6 @@ import {
     createRoute,
     createRouter,
     Link,
-    Outlet,
 } from '@tanstack/react-router'
 import App from './App'
 import { parseCatalogSearch } from '@/lib/catalog-search'
@@ -15,9 +14,10 @@ import { requireSession } from '@/lib/require-session'
 import { WalletsPage } from '@/pages/wallets'
 import { OrderPage } from '@/pages/order'
 import { CheckoutPage } from '@/pages/checkout'
+import { RootLayout } from '@/components/layout/root-layout'
 
 const rootRoute = createRootRoute({
-    component: () => <Outlet />,
+    component: RootLayout,
     notFoundComponent: () => (
         <main className="mx-auto max-w-6xl px-6 py-20">
             <h1 className="text-2xl font-bold">Página não encontrada</h1>
@@ -64,8 +64,11 @@ const authRoute = createRoute({
         const isOrderPage =
             /^\/orders\/[a-zA-Z0-9-]+$/.test(requestedRedirect)
 
+        const isNftPage =
+            /^\/nfts\/[a-zA-Z0-9-]+$/.test(requestedRedirect)
+
         const redirect =
-            allowedRedirects.includes(requestedRedirect) || isOrderPage
+            allowedRedirects.includes(requestedRedirect) || isOrderPage || isNftPage
                 ? requestedRedirect
                 : '/'
         return { mode, redirect }

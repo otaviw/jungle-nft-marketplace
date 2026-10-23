@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input'
 import { api } from '@/lib/api'
 import { CatalogFilters } from './catalog-filters'
 import type { NftListResponse } from '@/types/nft'
+import { FavoriteButton } from '@/components/nft/favorite-button'
 
 export function Catalog() {
     const search = useSearch({ from: '/' })
@@ -106,7 +107,7 @@ export function Catalog() {
                     ) : (
                         <div className="grid grid-cols-2 gap-4 md:grid-cols-3 md:gap-8">
                             {data.items.map((nft) => (
-                                <article key={nft.id} className="min-w-0">
+                                <article key={nft.id} className="relative min-w-0">
                                     <Link
                                         to="/nfts/$nftId"
                                         params={{ nftId: nft.id }}
@@ -129,6 +130,9 @@ export function Catalog() {
                                             {nft.price} ETH
                                         </p>
                                     </Link>
+                                    <div className="absolute top-3 right-3">
+                                        <FavoriteButton nftId={nft.id} />
+                                    </div>
                                 </article>
                             ))}
                         </div>

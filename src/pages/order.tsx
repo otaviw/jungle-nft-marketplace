@@ -12,12 +12,14 @@ import {
     readOrderAttempt,
 } from '@/lib/order-attempt'
 import type { Order } from '@/types/order'
+import { useOrderRealtime } from '@/hooks/use-order-realtime'
 
 export function OrderPage() {
     const { orderId } = useParams({ from: '/orders/$orderId' })
     const queryClient = useQueryClient()
     const session = useQuery(sessionOptions)
     const userId = session.data?.user.id
+    const realtimeMessage = useOrderRealtime(userId, orderId)
 
     const order = useQuery({
         queryKey: ['orders', userId, orderId],
@@ -28,10 +30,18 @@ export function OrderPage() {
                 { signal },
             )
 
-            return response.data
+            const cached = queryClient.getQueryData<Order>([
+                'orders',
+                userId,
+                orderId,
+            ])
+
+            return cached && cached.version > response.data.version
+                ? cached
+                : response.data
         },
         refetchInterval: (query) => {
-            return query.state.data?.status === 'pending' ? 1000 : false
+            return query.state.data?.status === 'pending' ? 15_000 : false
         },
     })
 
@@ -45,12 +55,11 @@ export function OrderPage() {
         try {
             const attempt = readOrderAttempt(userId)
 
-            // Uma página antiga não pode apagar outra tentativa em andamento.
             if (attempt?.orderId === orderId) {
                 clearOrderAttempt(userId)
             }
         } catch {
-            // Não alteramos um registro que não conseguimos interpretar.
+            //ignore
         }
 
         void queryClient.invalidateQueries({ queryKey: ['cart', userId] })
@@ -66,6 +75,9 @@ export function OrderPage() {
             <Header />
 
             <main className="mx-auto max-w-2xl px-5 py-10">
+                <p role="status" className="mb-5 text-xs text-muted-foreground">
+                    {realtimeMessage}
+                </p>
                 {order.isPending && (
                     <div role="status">
                         <span className="sr-only">Consultando pedido</span>

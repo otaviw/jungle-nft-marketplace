@@ -7,6 +7,7 @@ import { parseCatalogSearch } from '@/lib/catalog-search'
 import { api } from '@/lib/api'
 import type { Nft } from '@/types/nft'
 import { PurchaseOptions } from '@/components/nft/purchase-options'
+import { FavoriteButton } from '@/components/nft/favorite-button'
 
 export function NftDetailPage() {
     const { nftId } = useParams({ from: '/nfts/$nftId' })
@@ -96,7 +97,10 @@ export function NftDetailPage() {
                                 {nft.category}
                             </p>
 
-                            <h1 className="mt-3 text-3xl font-bold">{nft.name}</h1>
+                            <div className="mt-3 flex items-start justify-between gap-4">
+                                <h1 className="text-3xl font-bold">{nft.name}</h1>
+                                <FavoriteButton nftId={nft.id} />
+                            </div>
 
                             <dl className="mt-8 space-y-5">
                                 <div>

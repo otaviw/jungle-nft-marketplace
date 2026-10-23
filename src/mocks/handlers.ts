@@ -10,6 +10,9 @@ import { walletHandlers } from './wallet-handlers'
 import { quoteHandlers } from './quote-handlers'
 import { orderHandlers } from './order-handlers'
 import { walletConnectionHandlers } from './wallet-connection-handlers'
+import { socketHandlers } from './socket-handlers'
+import { catalogScenarioHandlers } from './catalog-scenario-handlers'
+import { favoriteHandlers } from './favorite-handlers'
 
 export const handlers = [
     ...cartHandlers,
@@ -19,6 +22,9 @@ export const handlers = [
     ...quoteHandlers,
     ...orderHandlers,
     ...walletConnectionHandlers,
+    ...socketHandlers,
+    ...catalogScenarioHandlers,
+    ...favoriteHandlers,
 
     http.get('/api/nfts', async ({ request }) => {
         const url = new URL(request.url)

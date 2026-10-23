@@ -1,5 +1,6 @@
 import { z } from 'zod'
 import { api } from './api'
+import axios from 'axios'
 import type { Order, OrderInput } from '@/types/order'
 
 const attemptSchema = z.object({
@@ -72,19 +73,34 @@ export async function submitOrderAttempt(
         return response.data
     }
 
-    const response = await api.post<Order>('/orders', attempt.input, {
-        headers: {
-            'Idempotency-Key': attempt.key,
-        },
-    })
+    try {
+        const response = await api.post<Order>('/orders', attempt.input, {
+            headers: {
+                'Idempotency-Key': attempt.key,
+            },
+        })
 
-    localStorage.setItem(
-        storageKey(userId),
-        JSON.stringify({
-            ...attempt,
-            orderId: response.data.id,
-        }),
-    )
+        localStorage.setItem(
+            storageKey(userId),
+            JSON.stringify({
+                ...attempt,
+                orderId: response.data.id,
+            }),
+        )
 
-    return response.data
+        return response.data
+    } catch (error) {
+        if (
+            axios.isAxiosError<{ code?: string }>(error)
+            && error.response?.data?.code === 'ORDER_NOT_CREATED'
+        ) {
+            const current = readOrderAttempt(userId)
+
+            if (current?.key === attempt.key && !current.orderId) {
+                clearOrderAttempt(userId)
+            }
+        }
+
+        throw error
+    }
 }

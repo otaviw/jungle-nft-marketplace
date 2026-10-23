@@ -17,11 +17,17 @@ const networkFees = {
 
 export class QuoteError extends Error {
     status: number
+    code: string
 
-    constructor(message: string, status: number) {
+    constructor(
+        message: string,
+        status: number,
+        code = 'QUOTE_REJECTED',
+    ) {
         super(message)
         this.name = 'QuoteError'
         this.status = status
+        this.code = code
     }
 }
 

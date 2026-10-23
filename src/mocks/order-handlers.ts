@@ -21,14 +21,21 @@ function getUserId(request: Request) {
 }
 
 function orderFailure(error: unknown) {
+    const knownError = error instanceof QuoteError
+
     return HttpResponse.json(
         {
-            message: error instanceof QuoteError
+            message: knownError
                 ? error.message
                 : 'Não foi possível processar o pedido.',
+            code: knownError && error.code === 'QUOTE_REJECTED'
+                ? 'ORDER_NOT_CREATED'
+                : knownError
+                    ? error.code
+                    : 'UNKNOWN_RESULT',
         },
         {
-            status: error instanceof QuoteError ? error.status : 503,
+            status: knownError ? error.status : 503,
         },
     )
 }
@@ -60,6 +67,7 @@ export const orderHandlers = [
             return HttpResponse.json(
                 {
                     message: 'Confira os dados do pedido.',
+                    code: 'ORDER_NOT_CREATED',
                     errors: result.error.flatten().fieldErrors,
                 },
                 { status: 422 },
@@ -69,8 +77,6 @@ export const orderHandlers = [
         try {
             const order = createOrder(userId, key, result.data)
 
-            // O pedido já existe antes da demora:
-            // repetir a mesma chave recupera a mesma operação.
             if (localStorage.getItem('kurio:scenario:order-timeout') === 'true') {
                 await delay(11_000)
             } else {

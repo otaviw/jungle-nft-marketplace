@@ -13,6 +13,7 @@ export interface Nft {
     category: string
     network: string
     editions: NftEdition[]
+    version: number
 }
 
 export interface NftListResponse {

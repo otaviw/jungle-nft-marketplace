@@ -45,6 +45,7 @@ function readDraft(user: User): Draft {
             }
         }
     } catch {
+        // ignore
     }
 
     return {
@@ -119,7 +120,19 @@ function CheckoutForm({ user }: { user: User }) {
     const sendingRef = useRef(false)
 
     const [draft, setDraft] = useState(() => readDraft(user))
-    const [quote, setQuote] = useState<Quote | null>(null)
+    const [savedQuote, setQuote] = useState<Quote | null>(null)
+    const [reviewRevision, setReviewRevision] = useState<string | null>(null)
+
+    const catalogChange = useQuery<string | null>({
+        queryKey: ['catalog-change'],
+        queryFn: async () => null,
+        enabled: false,
+        initialData: null,
+    })
+
+    const quote = reviewRevision === catalogChange.data
+        ? savedQuote
+        : null
     const [now, setNow] = useState(() => Date.now())
     const [hasAttempt, setHasAttempt] = useState(
         () => Boolean(readOrderAttempt(user.id)),
@@ -192,7 +205,12 @@ function CheckoutForm({ user }: { user: User }) {
 
             return response.data
         },
-        onSuccess: (value) => setQuote(value),
+        onSuccess: (value) => {
+            setQuote(value)
+            setReviewRevision(
+                queryClient.getQueryData<string>(['catalog-change']) ?? null,
+            )
+        },
         onError: () => setQuote(null),
     })
 

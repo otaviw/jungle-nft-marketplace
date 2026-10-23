@@ -36,5 +36,6 @@ export const nfts: Nft[] = Array.from({ length: 24 }, (_, index) => {
                 available: index % 3 === 0 ? 0 : 2,
             },
         ],
+        version: 1,
     }
 })

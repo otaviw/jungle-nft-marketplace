@@ -47,3 +47,37 @@ export async function logout() {
     clearAuthToken()
     queryClient.setQueryData(['session'], null)
 }
+
+export async function expireClientSession(expectedToken: string) {
+    if (getAuthToken() !== expectedToken) {
+        return false
+    }
+
+    clearAuthToken()
+
+    const privateKeys = new Set([
+        'session',
+        'cart',
+        'profile',
+        'wallets',
+        'wallet-connection',
+        'favorites',
+        'orders',
+    ])
+
+    await queryClient.cancelQueries({
+        predicate: (query) => privateKeys.has(String(query.queryKey[0])),
+    })
+
+    if (getAuthToken()) {
+        return false
+    }
+
+    queryClient.removeQueries({
+        predicate: (query) => privateKeys.has(String(query.queryKey[0])),
+    })
+
+    queryClient.setQueryData(['session'], null)
+
+    return true
+}

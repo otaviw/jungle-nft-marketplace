@@ -14,9 +14,9 @@ async function bootstrap() {
 
     await seedAuth()
     restoreInventory()
-    
+
     await worker.start({
-      onUnhandledFrame: 'bypass',
+      onUnhandledRequest: 'bypass',
     })
   }
 

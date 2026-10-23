@@ -3,6 +3,7 @@ import { readCart, writeCart } from './cart-store'
 import { nfts } from './fixtures'
 import { QuoteError, validateQuote } from './quote-store'
 import { getWalletConnection } from './wallet-connection-handlers'
+import { syncCatalogState } from './catalog-state'
 
 interface StoredOrder extends Order {
     userId: string
@@ -61,6 +62,8 @@ export function restoreInventory() {
             )
         }
     }
+
+    syncCatalogState()
 }
 
 function publicOrder(order: StoredOrder): Order {
@@ -95,6 +98,7 @@ export function createOrder(
             throw new QuoteError(
                 'Esta chave já foi utilizada com outros dados.',
                 409,
+                'IDEMPOTENCY_CONFLICT',
             )
         }
 
@@ -107,7 +111,11 @@ export function createOrder(
     )
 
     if (quoteAlreadyUsed) {
-        throw new QuoteError('Esta cotação já foi utilizada em um pedido.', 409)
+        throw new QuoteError(
+            'Esta cotação já foi utilizada em um pedido.',
+            409,
+            'QUOTE_ALREADY_USED',
+        )
     }
 
     restoreInventory()
