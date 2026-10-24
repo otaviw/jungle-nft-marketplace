@@ -1,177 +1,38 @@
 import { Link, useNavigate, useSearch } from '@tanstack/react-router'
 import { useQuery } from '@tanstack/react-query'
+import { ChevronLeft, ChevronRight, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
 import { api } from '@/lib/api'
-import { CatalogFilters } from './catalog-filters'
+import { sortOptions } from '@/lib/catalog-search'
 import type { NftListResponse } from '@/types/nft'
+import { CatalogFilters } from './catalog-filters'
 import { FavoriteButton } from '@/components/nft/favorite-button'
 
-export function Catalog() {
+export function Catalog({ filtersOpen, onCloseFilters }: { filtersOpen: boolean; onCloseFilters: () => void }) {
     const search = useSearch({ from: '/' })
     const navigate = useNavigate({ from: '/' })
-
     const { data, isPending, isError, isFetching, refetch } = useQuery({
         queryKey: ['nfts', search],
-        queryFn: async ({ signal }) => {
-            const response = await api.get<NftListResponse>('/nfts', {
-                params: search,
-                signal,
-            })
-
-            return response.data
-        },
+        queryFn: async ({ signal }) => (await api.get<NftListResponse>('/nfts', { params: search, signal })).data,
     })
-
+    const pages = data ? Math.max(1, Math.ceil(data.total / data.pageSize)) : 1
     return (
-        <section
-            id="catalogo"
-            aria-labelledby="catalog-title"
-            className="mx-auto max-w-6xl px-5 py-12 md:px-8 md:py-20"
-        >
-            <div className="mb-8 flex flex-wrap items-end justify-between gap-4">
-                <h2 id="catalog-title" className="text-lg font-bold text-primary">
-                    Todos os NFTs
-                </h2>
-
-                <form
-                    className="flex w-full gap-2 sm:w-auto"
-                    onSubmit={(event) => {
-                        event.preventDefault()
-
-                        const form = new FormData(event.currentTarget)
-                        const q = String(form.get('q') ?? '').trim()
-
-                        void navigate({
-                            search: { ...search, q, page: 1 },
-                        })
-                    }}
-                >
-                    <label htmlFor="catalog-search" className="sr-only">
-                        Buscar NFTs pelo nome
-                    </label>
-
-                    <Input
-                        key={search.q}
-                        id="catalog-search"
-                        name="q"
-                        type="search"
-                        defaultValue={search.q}
-                        placeholder="Buscar NFTs"
-                        className="min-w-0"
-                    />
-
-                    <Button type="submit">Buscar</Button>
-                </form>
+        <section id="catalogo" aria-labelledby="catalog-title" className="market-container catalog-layout">
+            <aside className="catalog-sidebar" data-open={filtersOpen}>
+                <button type="button" className="close-filters" onClick={onCloseFilters}>Fechar filtros <X size={17} /></button>
+                <CatalogFilters onApply={onCloseFilters} />
+                <div className="featured-nft"><h3>NFT em destaque</h3><p>Descubra a coleção</p><Link to="/nfts/$nftId" params={{ nftId: 'nft-002' }} aria-label="Conhecer Sage Nomad"><img src="/images/nfts/sage-nomad.png" alt="Sage Nomad" width={310} height={370} loading="lazy" /></Link></div>
+            </aside>
+            <div className="catalog-results">
+                <div className="catalog-toolbar"><div className="catalog-tabs"><h2 id="catalog-title">Todos os NFTs</h2><span title="Datas de lançamento não disponíveis na simulação" aria-disabled="true">Novos lançamentos</span><span title="Ranking de popularidade não disponível na simulação" aria-disabled="true">Em alta</span></div><label className="catalog-sort"><span id="catalog-sort-label">Ordenar por</span><span aria-hidden="true">:</span><select key={search.sort} aria-labelledby="catalog-sort-label" name="sort" form="catalog-filters" defaultValue={search.sort}>{sortOptions.map(option => <option key={option.value} value={option.value}>{option.label}</option>)}</select></label></div>
+                <p role="status" className="catalog-status">{isPending ? 'Carregando NFTs...' : isFetching ? 'Atualizando catálogo...' : data ? `${data.total} NFTs encontrados` : ''}</p>
+                {isPending && <div className="nft-grid">{Array.from({ length: 9 }, (_, index) => <div key={index} aria-hidden="true"><div className="catalog-shimmer aspect-square rounded-2xl" /><div className="catalog-shimmer mt-3 h-4 w-3/4 rounded" /><div className="catalog-shimmer mt-2 h-4 w-1/2 rounded" /></div>)}</div>}
+                {isError && <div role="alert" className="market-error"><p>Não foi possível carregar os NFTs.</p><Button onClick={() => void refetch()}>Tentar novamente</Button></div>}
+                {data && <>
+                    {data.items.length === 0 ? <p className="empty-catalog">Nenhum NFT encontrado. Tente outra busca.</p> : <div className="nft-grid">{data.items.map(nft => <article key={nft.id} className="nft-card"><Link to="/nfts/$nftId" params={{ nftId: nft.id }}><div className="nft-card-art"><img src={nft.image} alt={nft.name} width={250} height={250} loading="lazy" /></div><h3>{nft.name}</h3><p className="nft-card-price">{nft.price} ETH</p></Link><div className="card-favorite"><FavoriteButton nftId={nft.id} /></div></article>)}</div>}
+                    <nav aria-label="Paginação do catálogo" className="catalog-pagination"><Button variant="ghost" aria-label="Anterior" disabled={search.page <= 1} onClick={() => void navigate({ search: { ...search, page: search.page - 1 } })}><ChevronLeft aria-hidden="true" /></Button>{Array.from({ length: pages }, (_, index) => <button type="button" key={index} aria-label={`Página ${index + 1}`} aria-current={search.page === index + 1 ? 'page' : undefined} onClick={() => void navigate({ search: { ...search, page: index + 1 } })}>{index + 1}</button>)}<span className="sr-only">{search.page} / {pages}</span><Button variant="ghost" aria-label="Próxima" disabled={search.page >= pages} onClick={() => void navigate({ search: { ...search, page: search.page + 1 } })}><ChevronRight aria-hidden="true" /></Button></nav>
+                </>}
             </div>
-
-            <CatalogFilters />
-
-            <p role="status" className="mb-4 min-h-5 text-xs text-muted-foreground">
-                {isPending
-                    ? 'Carregando NFTs...'
-                    : isFetching
-                        ? 'Atualizando catálogo...'
-                        : data
-                            ? `${data.total} NFTs encontrados`
-                            : ''}
-            </p>
-
-            {isPending && (
-                <div className="grid grid-cols-2 gap-4 md:grid-cols-3 md:gap-8">
-                    {Array.from({ length: 9 }, (_, index) => (
-                        <div key={index} aria-hidden="true">
-                            <div className="catalog-shimmer aspect-square rounded-2xl" />
-                            <div className="catalog-shimmer mt-3 h-4 w-3/4 rounded" />
-                            <div className="catalog-shimmer mt-2 h-4 w-1/2 rounded" />
-                        </div>
-                    ))}
-                </div>
-            )}
-
-            {isError && (
-                <div role="alert" className="rounded-xl bg-card p-6">
-                    <p>Não foi possível carregar os NFTs.</p>
-                    <Button className="mt-4" onClick={() => void refetch()}>
-                        Tentar novamente
-                    </Button>
-                </div>
-            )}
-
-            {data && (
-                <>
-                    {data.items.length === 0 ? (
-                        <p className="py-12 text-muted-foreground">
-                            Nenhum NFT encontrado. Tente outra busca.
-                        </p>
-                    ) : (
-                        <div className="grid grid-cols-2 gap-4 md:grid-cols-3 md:gap-8">
-                            {data.items.map((nft) => (
-                                <article key={nft.id} className="relative min-w-0">
-                                    <Link
-                                        to="/nfts/$nftId"
-                                        params={{ nftId: nft.id }}
-                                        className="block rounded-xl"
-                                    >
-
-                                        <div className="rounded-2xl bg-card p-2 md:rounded-none">
-                                            <img
-                                                src={nft.image}
-                                                alt={nft.name}
-                                                width={400}
-                                                height={400}
-                                                loading="lazy"
-                                                className="aspect-square w-full rounded-xl object-cover"
-                                            />
-                                        </div>
-
-                                        <h3 className="mt-3 text-sm">{nft.name}</h3>
-                                        <p className="mt-1 font-bold text-primary">
-                                            {nft.price} ETH
-                                        </p>
-                                    </Link>
-                                    <div className="absolute top-3 right-3">
-                                        <FavoriteButton nftId={nft.id} />
-                                    </div>
-                                </article>
-                            ))}
-                        </div>
-                    )}
-
-                    <nav
-                        aria-label="Paginação do catálogo"
-                        className="mt-8 flex items-center justify-end gap-3"
-                    >
-                        <Button
-                            variant="outline"
-                            disabled={search.page <= 1}
-                            onClick={() =>
-                                void navigate({
-                                    search: { ...search, page: search.page - 1 },
-                                })
-                            }
-                        >
-                            Anterior
-                        </Button>
-
-                        <span className="text-sm">
-                            {search.page} / {Math.max(1, Math.ceil(data.total / data.pageSize))}
-                        </span>
-
-                        <Button
-                            variant="outline"
-                            disabled={search.page * data.pageSize >= data.total}
-                            onClick={() =>
-                                void navigate({
-                                    search: { ...search, page: search.page + 1 },
-                                })
-                            }
-                        >
-                            Próxima
-                        </Button>
-                    </nav>
-                </>
-            )}
         </section>
     )
 }

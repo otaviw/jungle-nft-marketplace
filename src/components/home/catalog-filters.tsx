@@ -1,107 +1,23 @@
 import { useNavigate, useSearch } from '@tanstack/react-router'
 import { Button } from '@/components/ui/button'
-import {
-    categories,
-    networks,
-    parseCatalogSearch,
-    sortOptions,
-} from '@/lib/catalog-search'
+import { categories, networks, parseCatalogSearch } from '@/lib/catalog-search'
 
-const selectClassName =
-    'mt-2 w-full rounded-md border border-input bg-background px-3 py-2 text-sm'
-
-export function CatalogFilters() {
+export function CatalogFilters({ onApply }: { onApply?: () => void }) {
     const search = useSearch({ from: '/' })
     const navigate = useNavigate({ from: '/' })
-
     return (
-        <form
-            key={`${search.category}-${search.network}-${search.sort}`}
-            className="mb-8 grid gap-4 rounded-xl bg-card p-4 sm:grid-cols-2 lg:grid-cols-4"
-            onSubmit={(event) => {
-                event.preventDefault()
-
-                const form = new FormData(event.currentTarget)
-
-                const nextSearch = parseCatalogSearch({
-                    ...search,
-                    category: form.get('category'),
-                    network: form.get('network'),
-                    sort: form.get('sort'),
-                    page: 1,
-                })
-
-                void navigate({ search: nextSearch })
-            }}
-        >
-            <label className="text-sm">
-                <span id="catalog-category-label">Coleção</span>
-
-                <select
-                    aria-labelledby="catalog-category-label"
-                    name="category"
-                    defaultValue={search.category ?? ''}
-                    className={selectClassName}
-                >
-                    <option value="">Todas as coleções</option>
-                    {categories.map((category) => (
-                        <option key={category} value={category}>
-                            {category}
-                        </option>
-                    ))}
-                </select>
+        <form id="catalog-filters" key={`${search.category}-${search.network}-${search.sort}`} onSubmit={event => {
+            event.preventDefault()
+            const form = new FormData(event.currentTarget)
+            void navigate({ search: parseCatalogSearch({ ...search, category: form.get('category'), network: form.get('network'), sort: form.get('sort'), page: 1 }) })
+            onApply?.()
+        }}>
+            <label className="sidebar-label"><span id="catalog-category-label">Coleções</span><span className="sr-only">Selecione uma coleção</span>
+                <select aria-label="Coleção" name="category" defaultValue={search.category ?? ''} size={4} className="sidebar-options"><option value="">Todas as coleções</option>{categories.map(category => <option key={category} value={category}>{category}</option>)}</select>
             </label>
-
-            <label className="text-sm">
-                <span id="catalog-network-label">Rede</span>
-
-                <select
-                    aria-labelledby="catalog-network-label"
-                    name="network"
-                    defaultValue={search.network ?? ''}
-                    className={selectClassName}
-                >
-                    <option value="">Todas as redes</option>
-                    {networks.map((network) => (
-                        <option key={network} value={network}>
-                            {network}
-                        </option>
-                    ))}
-                </select>
-            </label>
-
-            <label className="text-sm">
-                <span id="catalog-sort-label">Ordenar por</span>
-
-                <select
-                    aria-labelledby="catalog-sort-label"
-                    name="sort"
-                    defaultValue={search.sort}
-                    className={selectClassName}
-                >
-                    {sortOptions.map((option) => (
-                        <option key={option.value} value={option.value}>
-                            {option.label}
-                        </option>
-                    ))}
-                </select>
-            </label>
-
-            <div className="flex items-end gap-2">
-                <Button type="submit">Aplicar</Button>
-
-                <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() =>
-                        void navigate({
-                            search: parseCatalogSearch({ q: search.q }),
-                        })
-                    }
-                >
-                    Limpar
-                </Button>
-            </div>
+            <div className="sidebar-price"><h3>Preço</h3><p>Valores em ETH</p><div className="price-sort-actions">{[['price-asc', 'Menor preço'], ['price-desc', 'Maior preço']].map(([value, label]) => <button key={value} type="submit" onClick={event => { const sort = event.currentTarget.form?.elements.namedItem('sort'); if (sort instanceof HTMLSelectElement) sort.value = value }}>{label}</button>)}</div></div>
+            <label className="sidebar-label"><span id="catalog-network-label">Rede</span><select aria-labelledby="catalog-network-label" name="network" defaultValue={search.network ?? ''} size={4} className="sidebar-options"><option value="">Todas as redes</option>{networks.map(network => <option key={network} value={network}>{network}</option>)}</select></label>
+            <div className="filter-actions"><Button type="submit">Aplicar</Button><Button type="button" variant="ghost" onClick={() => { void navigate({ search: parseCatalogSearch({ q: search.q }) }); onApply?.() }}>Limpar</Button></div>
         </form>
     )
 }

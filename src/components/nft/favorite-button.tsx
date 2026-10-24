@@ -4,7 +4,7 @@ import { Heart } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { useFavorite } from '@/hooks/use-favorite'
 
-export function FavoriteButton({ nftId }: { nftId: string }) {
+export function FavoriteButton({ nftId, text = false }: { nftId: string; text?: boolean }) {
     const navigate = useNavigate()
     const state = useFavorite(nftId)
 
@@ -20,10 +20,12 @@ export function FavoriteButton({ nftId }: { nftId: string }) {
             <Button
                 type="button"
                 variant="outline"
-                size="icon"
-                className="rounded-full bg-background/90"
+                size={text ? 'default' : 'icon'}
+                className={text ? 'favorite-text' : 'favorite-icon rounded-full bg-background/90'}
                 aria-label={
-                    state.loadError
+                    text
+                        ? state.loadError ? 'Favoritar — tentar carregar favoritos novamente' : 'Favoritar'
+                        : state.loadError
                         ? 'Tentar carregar favoritos novamente'
                         : state.favorite
                             ? 'Remover dos favoritos'
@@ -56,6 +58,7 @@ export function FavoriteButton({ nftId }: { nftId: string }) {
                     aria-hidden="true"
                     className={state.favorite ? 'fill-primary text-primary' : ''}
                 />
+                {text && <span>Favoritar</span>}
             </Button>
 
             {state.mutation.isError && (

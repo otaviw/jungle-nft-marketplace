@@ -182,7 +182,35 @@ Os quatro arquivos referenciados pelas fixtures e pelas telas estão presentes:
 
 As duas primeiras imagens também aparecem no hero. As quatro são reutilizadas pelos 24 NFTs e seguem para detalhe, carrinho, cotação e recibo. Os arquivos existentes têm cabeçalho PNG: Emerald Ape em 450×450 e os demais em 250×250. A correspondência com o Figma ainda exige conferência visual. Nenhuma imagem foi alterada nesta tarefa.
 
-`public/favicon.svg`, `public/icons.svg` e `public/mockServiceWorker.js` estão presentes. Geist Variable é importada de `@fontsource-variable/geist`; seus cinco arquivos WOFF2 são empacotados localmente pelo Vite. O CSS do `body` usa também `Courier New`, com fallback `monospace`, dependente do sistema. A tipografia e a composição visual não foram alteradas nesta revisão.
+`public/favicon.svg`, `public/icons.svg` e `public/mockServiceWorker.js` estão presentes. Geist Variable continua importada de `@fontsource-variable/geist`, com seus cinco WOFF2 locais. A interface usa a aproximação monoespaçada `Consolas, Liberation Mono, Courier New, monospace`. O token `font/family` do Figma não identifica uma família real; não foi tratado como nome de fonte nem motivou o download de uma fonte presumida. A aparência pode variar conforme as fontes do sistema.
+
+## Revisão visual de home e detalhe
+
+As referências usadas estão em `pages figma/Desktop` e `pages figma/Mobile`: início e detalhes do NFT. O link do Figma não pôde ser consultado neste ambiente; a composição foi comparada com os PNGs fornecidos. O conteúdo desktop tem largura máxima de 1200 px; foram conferidas também as larguras de 390 e 768 px.
+
+Home e detalhe usam header e footer próprios; conta, carrinho e checkout mantêm suas composições anteriores. As mudanças compartilhadas ficam nos tokens de cor e tipografia. Busca, filtros e paginação continuam na URL, e a escolha de edição agora usa rádios no formato de pills. O botão “Comprar NFT” continua adicionando ao carrinho; não confirma uma compra.
+
+A galeria tem quatro recortes selecionáveis da própria imagem e ampliação em diálogo, com fechamento por Escape e retorno do foco. No desktop, as miniaturas ficam ao lado da obra; no mobile, ficam no diálogo aberto ao tocar a imagem. O diálogo explica que os recortes pertencem à mesma imagem: não há fotografias alternativas fornecidas. Avaliações, contratos blockchain, atributos e contagens ilustrativas do Figma não foram transformados em dados fictícios novos: a tela usa os dados reais das fixtures e informa a ausência de avaliações. Newsletter e leitura editorial não enviam inscrições nem simulam sucesso; os destinos auxiliares não implementados são apresentados como texto.
+
+Para gerar capturas de revisão e conferir carregamento de imagens e largura da página, inicie o Vite na porta usada pelo script:
+
+```sh
+npm run dev -- --host 127.0.0.1 --port 4174 --strictPort
+```
+
+Em outro terminal:
+
+```sh
+node scripts/visual-review.mjs
+```
+
+As capturas de home e detalhe em 390, 768 e 1440 px e `checks.json` ficam em `artifacts/visual-review/current/`, ignorado pelo Git. No mobile, há também a versão da página inteira. `VISUAL_REVIEW_URL` permite apontar para outro servidor, incluindo o preview do build; `VISUAL_REVIEW_WIDTHS=390,414,768,1440` inclui a largura de 414 px das referências mobile. `VISUAL_REVIEW_OUTPUT` escolhe a subpasta de saída. O relatório JSON inclui medidas dos principais blocos. Execute essa revisão sem outro Playwright em andamento. São artefatos de inspeção, sem baselines definitivas.
+
+No Windows, `scripts/compare-visual.ps1` monta os PNGs de referência e implementação lado a lado, na mesma escala. Recebe `-CaptureFolder` e `-OutputFolder`, relativos a `artifacts/visual-review`. A segunda revisão usa `revision-2-before` para o estado anterior e `comparison-after` para a comparação final. Essas imagens foram inspecionadas separadamente em desktop e mobile; carregamento de assets e largura do documento são verificações técnicas adicionais, não medidas de fidelidade visual.
+
+Diferenças ainda conhecidas: a fonte exata não foi identificada; o catálogo tem as três categorias, duas edições e 24 NFTs das fixtures; não há dados de popularidade ou datas para ativar “Em alta” e “Novos lançamentos”. A API atual também não aceita intervalo de preços: a ordenação por preço continua disponível, sem simular um filtro que não existe. A composição de 768 px é uma adaptação, pois não há frame específico de tablet.
+
+Capturas, medidas e lista dos arquivos alterados estão em [docs/visual-review.md](docs/visual-review.md).
 
 ## Preparação para Vercel
 

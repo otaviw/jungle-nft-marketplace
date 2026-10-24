@@ -66,7 +66,7 @@ test('reconexão recupera o preço por REST mesmo sem eventos do catálogo', asy
 
     const purchaseForm = page.locator('form').filter({
         has: page.getByRole('button', {
-            name: 'Adicionar ao carrinho',
+            name: 'Comprar NFT — adicionar ao carrinho',
             exact: true,
         }),
     })

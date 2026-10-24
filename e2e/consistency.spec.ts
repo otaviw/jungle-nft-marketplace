@@ -215,7 +215,7 @@ test('detalhe recebe alterações de preço sem atualizar a página', async ({
 
     const purchaseForm = page.locator('form').filter({
         has: page.getByRole('button', {
-            name: 'Adicionar ao carrinho',
+            name: 'Comprar NFT — adicionar ao carrinho',
             exact: true,
         }),
     })

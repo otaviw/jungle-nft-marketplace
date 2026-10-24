@@ -30,10 +30,10 @@ export async function addNft(page: Page, id = 'nft-001') {
         page.getByRole('heading', { level: 1 }),
     ).toBeVisible()
 
-    await page.getByLabel('Edição', { exact: true }).selectOption('standard')
+    await page.getByRole('radio', { name: 'Edição padrão', exact: true }).check()
 
     await page.getByRole('button', {
-        name: 'Adicionar ao carrinho',
+        name: 'Comprar NFT — adicionar ao carrinho',
         exact: true,
     }).click()
 

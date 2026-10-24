@@ -7,6 +7,8 @@ import { api } from '@/lib/api'
 import type { Cart, CartItem } from '@/types/cart'
 import type { Nft } from '@/types/nft'
 import { Link } from '@tanstack/react-router'
+import { Minus, Plus, ShoppingCart } from 'lucide-react'
+import { FavoriteButton } from './favorite-button'
 
 import { sessionOptions } from '@/lib/session'
 export function PurchaseOptions({ nft }: { nft: Nft }) {
@@ -49,7 +51,8 @@ export function PurchaseOptions({ nft }: { nft: Nft }) {
 
     return (
         <form
-            className="mt-8 space-y-5 border-t border-border pt-6"
+            className="purchase-options"
+            data-added={addItem.isSuccess}
             onSubmit={(event) => {
                 event.preventDefault()
 
@@ -69,48 +72,33 @@ export function PurchaseOptions({ nft }: { nft: Nft }) {
                 })
             }}
         >
-            <label className="block text-sm">
-                <span id="nft-edition-label">Edição</span>
-
-                <select
-                    aria-labelledby="nft-edition-label"
-                    value={editionId}
-                    disabled={addItem.isPending}
-                    className="mt-2 w-full rounded-md border border-input bg-background px-3 py-3"
-                    onChange={(event) => {
-                        setEditionId(event.target.value)
-                        setQuantity('1')
-                        addItem.reset()
-                    }}
-                >
-                    {nft.editions.map((item) => (
-                        <option key={item.id} value={item.id}>
-                            {item.name}
-                            {item.available === 0 ? ' — Esgotada' : ''}
-                        </option>
-                    ))}
-                </select>
-            </label>
+            <fieldset className="edition-selector" disabled={addItem.isPending}>
+                <legend>Edição:</legend>
+                <div className="edition-chips">{nft.editions.map(item => <label key={item.id} data-selected={editionId === item.id} data-unavailable={item.available === 0}><input type="radio" name="edition" value={item.id} aria-label={item.name} checked={editionId === item.id} disabled={item.available === 0} onChange={() => { setEditionId(item.id); setQuantity('1'); addItem.reset() }} /><span>{item.name === 'Edição padrão' ? 'Padrão' : 'Limitada'}</span>{item.available === 0 && <small> · Esgotada</small>}</label>)}</div>
+            </fieldset>
 
             {edition && (
                 <>
-                    <p className="text-xl font-bold text-primary">
+                    <p className="purchase-unit-price">
                         {edition.price} ETH
                         <span className="ml-2 text-xs font-normal text-muted-foreground">
                             por unidade
                         </span>
                     </p>
 
-                    <p className="text-sm text-muted-foreground">
+                    <p id="edition-availability" className="purchase-availability" data-unavailable={edition.available === 0}>
                         {edition.available > 0
                             ? `${edition.available} unidades disponíveis`
                             : 'Esta edição está esgotada.'}
                     </p>
 
-                    <label className="block text-sm">
-                        Quantidade
+                    <div className="quantity-row"><label htmlFor="nft-quantity" className="quantity-label"><span id="nft-quantity-label" className="sr-only">Quantidade</span><span aria-hidden="true">Qtd.</span></label>
+                    <div className="quantity-stepper">
+                        <button type="button" aria-label="Diminuir quantidade" disabled={units <= 1 || addItem.isPending || edition.available === 0} onClick={() => { setQuantity(String(Math.max(1, units - 1))); addItem.reset() }}><Minus size={18} aria-hidden="true" /></button>
 
                         <Input
+                            id="nft-quantity"
+                            aria-labelledby="nft-quantity-label"
                             type="number"
                             min={1}
                             max={edition.available || 1}
@@ -118,16 +106,17 @@ export function PurchaseOptions({ nft }: { nft: Nft }) {
                             value={quantity}
                             disabled={edition.available === 0 || addItem.isPending}
                             aria-invalid={!validQuantity && edition.available > 0}
-                            aria-describedby="quantity-help"
-                            className="mt-2 max-w-32"
+                            aria-describedby="quantity-help edition-availability"
+                            className="quantity-input"
                             onChange={(event) => {
                                 setQuantity(event.target.value)
                                 addItem.reset()
                             }}
                         />
-                    </label>
+                        <button type="button" aria-label="Aumentar quantidade" disabled={!validQuantity || units >= edition.available || addItem.isPending} onClick={() => { setQuantity(String(units + 1)); addItem.reset() }}><Plus size={18} aria-hidden="true" /></button>
+                    </div></div>
 
-                    <p id="quantity-help" className="text-xs text-muted-foreground">
+                    <p id="quantity-help" className="quantity-help sr-only">
                         Selecione uma quantidade inteira dentro da disponibilidade.
                         O limite inclui unidades já adicionadas ao carrinho.
                     </p>
@@ -136,21 +125,25 @@ export function PurchaseOptions({ nft }: { nft: Nft }) {
 
             <Button
                 type="submit"
-                className="w-full"
+                aria-label={addItem.isPending ? 'Adicionando ao carrinho' : 'Comprar NFT — adicionar ao carrinho'}
+                aria-busy={addItem.isPending}
+                className="purchase-submit"
                 disabled={
                     !validQuantity
                     || addItem.isPending
                     || !session.isSuccess
                 }
             >
-                {addItem.isPending ? 'Adicionando...' : 'Adicionar ao carrinho'}
+                <span className="purchase-label"><span className="purchase-label-desktop">{addItem.isPending ? 'Adicionando...' : 'Comprar'}</span><span className="purchase-label-mobile">{addItem.isPending ? 'Adicionando...' : 'Comprar NFT'}</span></span>
+                <ShoppingCart size={20} aria-hidden="true" />
             </Button>
+            <div className="purchase-favorite"><FavoriteButton nftId={nft.id} text /></div>
 
             <Link
                 to="/cart"
                 className="block text-center text-sm text-primary underline"
             >
-                Ver carrinho
+                <ShoppingCart size={22} aria-hidden="true" /><span>Ver carrinho</span>
             </Link>
 
             {addItem.isSuccess && (

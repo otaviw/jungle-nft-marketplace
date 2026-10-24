@@ -45,7 +45,7 @@ test('favorito otimista faz rollback e permite tentar novamente', async ({
     await page.goto('/nfts/nft-001')
 
     const favorite = page.getByRole('button', {
-        name: /^(Adicionar aos favoritos|Remover dos favoritos)$/,
+        name: /^(Adicionar aos favoritos|Remover dos favoritos|Favoritar)$/,
     })
 
     await expect(favorite).toBeEnabled()
