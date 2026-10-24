@@ -1,4 +1,4 @@
-import { delay, http, HttpResponse } from 'msw'
+import { http, HttpResponse } from 'msw'
 import { parseCatalogSearch } from '@/lib/catalog-search'
 import { ethToWei } from '@/lib/eth'
 import type { NftListResponse } from '@/types/nft'
@@ -13,8 +13,10 @@ import { walletConnectionHandlers } from './wallet-connection-handlers'
 import { socketHandlers } from './socket-handlers'
 import { catalogScenarioHandlers } from './catalog-scenario-handlers'
 import { favoriteHandlers } from './favorite-handlers'
+import { networkScenarioHandlers, simulateNetwork } from './network-scenarios'
 
 export const handlers = [
+    ...networkScenarioHandlers,
     ...cartHandlers,
     ...authHandlers,
     ...profileHandlers,
@@ -61,7 +63,8 @@ export const handlers = [
             })
         }
 
-        await delay(600)
+        const failure = await simulateNetwork('catalog', 600)
+        if (failure) return failure
 
         return HttpResponse.json<NftListResponse>({
             items: filtered.slice(
@@ -75,7 +78,8 @@ export const handlers = [
     }),
 
     http.get('/api/nfts/:id', async ({ params }) => {
-        await delay(500)
+        const failure = await simulateNetwork('detail', 500)
+        if (failure) return failure
 
         const nft = nfts.find((item) => item.id === params.id)
 

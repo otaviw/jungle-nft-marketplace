@@ -48,6 +48,10 @@ Todos os caminhos abaixo têm prefixo `/api`. Corpo e resposta usam JSON, exceto
 | `POST /wallet-connection` | `{ walletId }` | Conexão simulada |
 | `DELETE /wallet-connection` | Token | 204 |
 | `PATCH /scenarios/nfts/:id/price` | `{ editionId, price }` | `Nft` atualizado; controle dos mocks, sem autenticação |
+| `PATCH /scenarios/nfts/:id/availability` | `{ editionId, available }`, inteiro de 0 a 10000 | `Nft` atualizado |
+| `PUT /scenarios/network` | `{ resource, delaysMs?, failures? }` | Configuração validada; reinicia sequência do recurso |
+| `DELETE /scenarios/network` | Sem corpo | 204; remove todas as sequências de rede |
+| `POST /scenarios/reset` | Sem corpo | `{ reload: '/' }`; exige navegação para concluir o reset |
 
 Estruturas principais (tipos completos em `src/types` e `src/lib/wallet-schema.ts`):
 
@@ -88,6 +92,8 @@ O pedido começa `pending`, com resolução prevista para três segundos depois.
 
 O recibo lê o snapshot persistido no pedido. Mudanças posteriores no catálogo não recalculam seus valores. Referências de transação são simuladas.
 
+O controle de disponibilidade guarda uma base ajustada em `kurio:catalog-availability:v1`: estoque atual informado mais quantidades já vendidas. `restoreInventory` usa essa base e desconta pedidos confirmados. Assim, um ajuste informa a disponibilidade efetiva, persiste no refresh e permite que novas vendas continuem consumindo estoque. A mudança passa por `syncCatalogState`, incrementando a versão e chegando à interface por `nft.updated` e reconsulta REST.
+
 ### Idempotência e recuperação
 
 `src/lib/order-attempt.ts` salva uma chave UUID e o corpo antes de enviar. O checkout bloqueia envios concorrentes com uma ref e o estado da mutation. No mock, a chave deve ter de 8 a 128 caracteres e é vinculada ao usuário e ao conteúdo serializado da requisição. Repetir chave/corpo recupera o mesmo pedido; mudar o corpo retorna 409 `IDEMPOTENCY_CONFLICT`. Reutilizar uma cotação em outro pedido retorna `QUOTE_ALREADY_USED`.
@@ -124,10 +130,22 @@ Eventos são notificações, sem cópia completa dos dados. O cliente valida o p
 
 Na reconexão, assinaturas são refeitas e os eventos `ready` provocam invalidação REST. O pedido tem ainda polling REST a cada 15 segundos enquanto `pending`. O cliente não aplica confirmação diretamente pelo evento. Listeners, sockets e timers do mock são liberados no encerramento do ciclo. Os stores locais não oferecem sincronização entre dispositivos; múltiplas abas não equivalem a um backend concorrente.
 
+## Controles de rede e reset
+
+`src/mocks/network-scenarios.ts` aplica sequências somente às consultas de catálogo, detalhe e carrinho. Não há caminhos alternativos no Axios, nos componentes ou no cache. `PUT /scenarios/network` aceita `resource: 'catalog' | 'detail' | 'cart'`, `delaysMs` com 1 a 50 inteiros entre 0 e 8000 e `failures` com até 50 valores `network`, `http-503` ou `null`. Os campos de sequência são opcionais; um PUT substitui a configuração e zera o cursor daquele recurso.
+
+O MSW consome cada passo antes do await, por ordem de chegada, e persiste o cursor em `kurio:scenario:network`. O último atraso se repete; falhas não se repetem depois do fim da lista. Consultas canceladas também consomem um passo. `HttpResponse.error()` produz erro de conexão e a alternativa HTTP retorna 503. Retries da aplicação passam pelo mesmo controle. `DELETE /scenarios/network` remove as sequências sem mudar os dados de negócio. Os atrasos originais permanecem quando não há configuração.
+
+O reset é explícito, sem botão novo na interface: `POST /scenarios/reset`, seguido da navegação para o `reload` retornado. `src/mocks/reset.ts` limpa apenas o namespace `kurio:` dos dois storages e mantém um marcador temporário no `sessionStorage`. A recarga é obrigatória: `src/main.tsx` consome o marcador e repete a limpeza antes de importar/inicializar os stores, sem deixar escritas tardias da página anterior no cenário novo. Depois, `seedAuth` recria as duas contas com as credenciais iniciais e `restoreInventory` parte das fixtures originais.
+
+Essa recarga também recria o QueryClient e os módulos, descartando catálogo em memória, requests, timers e conexões Socket.IO anteriores. O worker não é desinstalado. O reset elimina todos os usuários alterados ou adicionais, sessões, dados privados, carrinhos, cotações, pedidos, tentativas, drafts e controles de cenário dessa origem/aba. IDs e salts são novos, mas o estado funcional é o mesmo após resets repetidos. Outras abas devem ser fechadas: seus `sessionStorage` e escritas independentes não são controlados por esta operação.
+
+`e2e/mock-reset.spec.ts` verifica restauração após alterações nas duas contas, venda confirmada, reposição e esgotamento, avatar, dados privados e escritos tardios, além de preservar dados externos ao namespace. `e2e/mock-scenarios.spec.ts` verifica skeletons, erros de conexão/503 e recuperação, ordenação das respostas e cancelamento da busca anterior, e esgotamento no checkout. A retomada de pedido pendente em `e2e/realtime.spec.ts` usa o relógio fixo do Playwright e o controle de interrupção existente no mock, mantendo as mensagens no transporte Socket.IO e a reconciliação na API REST.
+
 ## Acessibilidade e limites desta revisão
 
 Os inputs de perfil usam `aria-labelledby` no span com apenas o título e `aria-describedby` no span de erro. O asterisco é `aria-hidden`, e `required` indica obrigatoriedade. Assim, a validação não muda o nome acessível. Esta revisão não altera classes, espaçamentos ou composição das telas.
 
 Há feedback com `role="status"` e `role="alert"`, estados de carregamento e shimmer com respeito a movimento reduzido. Isso não constitui auditoria completa de acessibilidade. O HTML ainda declara `lang="en"` apesar da interface em português; conferir em revisão de acessibilidade/SEO. A tipografia combina Geist importada e Courier New no body. Fidelidade ao Figma e assets corretos ainda precisam ser conferidos; nenhuma substituição foi introduzida nesta tarefa.
 
-O [README](README.md) registra os controles reais dos cenários, reset manual, quatro imagens ausentes e pendências de deploy, Lighthouse, screenshots e cobertura. Não há reset integral implementado na interface/API, configuração de auditoria Lighthouse ou baselines visuais. A configuração Vercel está preparada; a execução em hospedagem pública permanece pendente.
+O [README](README.md) registra os controles reais dos cenários, reset integral com recarga, assets presentes e pendências de deploy, Lighthouse, screenshots e cobertura. Não há configuração de auditoria Lighthouse ou baselines visuais. A configuração Vercel está preparada; a execução em hospedagem pública permanece pendente.

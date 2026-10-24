@@ -49,6 +49,7 @@ O cupom `KURIO10` dá 10% de desconto. `EXPIRADO` reproduz cupom expirado; outro
 | `npm run lint` | ESLint |
 | `npm run test:e2e` | Toda a suíte Playwright, desktop e mobile |
 | `npm run test:e2e -- e2e/profile-wallets.spec.ts` | Perfil, senha, avatar e carteiras |
+| `npm run test:e2e -- e2e/mock-reset.spec.ts e2e/mock-scenarios.spec.ts e2e/realtime.spec.ts` | Reset, rede, estoque e reconexão; desktop e mobile |
 | `npm run test:e2e:headed` | Testes com navegador visível |
 | `npm run test:e2e:report` | Relatório HTML da última execução |
 
@@ -103,35 +104,83 @@ window.dispatchEvent(new CustomEvent('kurio:scenario:realtime', {
 }))
 ```
 
-O escopo também pode ser `order` na página de pedido. O controle aceita `{ action: 'probe', scope: 'catalog', handled: 0 }` para detectar assinaturas e `{ action: 'order-event', orderId, version }` para emitir versões duplicadas ou antigas de um pedido assinado. Ele instrui o mock a enviar pelo transporte, sem alterar diretamente o cache da interface. Exemplos completos em `e2e/realtime.spec.ts`.
+O escopo também pode ser `order` na página de pedido. Para testar interrupção durante um pedido pendente, dispare com esse escopo enquanto a página mostra “Aguardando confirmação”. A reconexão refaz a assinatura e consulta o mesmo pedido por REST, sem outro POST. O teste em `e2e/realtime.spec.ts` fixa o relógio para manter o pedido pendente até depois da reconexão e então libera sua confirmação.
 
-Há latências fixas nos handlers, entre 200 e 700 ms nos fluxos principais. O timeout de pedido demora 11 segundos, acima dos 10 segundos do Axios. Não há seletor geral de cenários, latência variável configurável ou cenário geral de conexão REST indisponível. A expiração determinística de cotação é exercitada com o relógio do Playwright em `e2e/quote-expiration.spec.ts`.
+O controle também aceita `{ action: 'probe', scope: 'catalog', handled: 0 }` para detectar assinaturas e `{ action: 'order-event', orderId, version }` para emitir versões duplicadas ou antigas de um pedido assinado. Ele instrui o mock a enviar pelo transporte, sem alterar diretamente o cache da interface.
 
-### Reset manual
+### Lentidão, latência variável e falhas de rede
 
-Não existe botão, endpoint ou comando de reset integral. Para voltar às fixtures, feche outras abas da aplicação e execute no console:
+`PUT /api/scenarios/network` configura as consultas de um recurso: `catalog` (`GET /nfts`), `detail` (`GET /nfts/:id`) ou `cart` (`GET /cart`). Por exemplo, para observar os skeletons do catálogo:
 
 ```js
-for (const storage of [localStorage, sessionStorage]) {
-  for (const key of Object.keys(storage)) {
-    if (key.startsWith('kurio:')) storage.removeItem(key)
-  }
-}
+await fetch('/api/scenarios/network', {
+  method: 'PUT',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({ resource: 'catalog', delaysMs: [3000] }),
+})
 window.location.assign('/')
 ```
 
-Isso apaga contas alteradas, sessão, carrinhos, favoritos, perfil/avatar, carteiras/conexões, cotações, pedidos, tentativas, preços, versões e flags dessa origem. A navegação recarrega os módulos e restaura também o estoque em memória. O service worker permanece instalado. Outra opção para demonstração isolada é abrir um novo contexto privado do navegador.
+Os controles são sequências consumidas na ordem de chegada ao MSW, incluindo requests canceladas e refetch em segundo plano. `delaysMs: [1800, 100]` faz a primeira consulta demorar mais que a segunda; o último atraso se repete nas seguintes. Não há sorteio. Cada atraso deve ser inteiro de 0 a 8000 ms, com até 50 passos. Sem `delaysMs`, vale o atraso original do handler. O cursor é persistido e não reinicia no refresh; outro PUT reinicia apenas o recurso informado.
+
+Para falha de conexão com recuperação, use:
+
+```js
+await fetch('/api/scenarios/network', {
+  method: 'PUT',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({
+    resource: 'catalog',
+    delaysMs: [100],
+    failures: ['network', 'network'],
+  }),
+})
+window.location.assign('/')
+```
+
+`network` usa `HttpResponse.error()`; `http-503` retorna HTTP 503. `null` representa sucesso num passo intermediário. Após consumir `failures`, as consultas voltam ao comportamento normal. A sequência pode ter até 50 passos. As duas falhas do exemplo incluem o único retry automático da consulta; o erro fica visível e “Tentar novamente” recupera o catálogo. Uma falha só pode ser recuperada automaticamente pelo retry.
+
+Use `DELETE /api/scenarios/network` para remover todas as sequências de rede, sem apagar os dados de negócio. Os demais handlers mantêm suas latências originais, entre 200 e 700 ms nos fluxos principais. O timeout de pedido continua com seu controle próprio: 11 segundos, acima dos 10 segundos do Axios. Não há painel visual de cenários. A expiração determinística de cotação continua em `e2e/quote-expiration.spec.ts`.
+
+### Edição esgotada durante a compra
+
+Depois de adicionar `nft-001` e revisar o checkout:
+
+```js
+await fetch('/api/scenarios/nfts/nft-001/availability', {
+  method: 'PATCH',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({ editionId: 'standard', available: 0 }),
+})
+```
+
+`available` é a disponibilidade atual, inteira de 0 a 10000. A alteração persiste no refresh e emite `nft.updated` pela mesma integração Socket.IO usada nos preços. O checkout descarta a revisão e exige outra cotação; estoque insuficiente retorna 409. O carrinho preserva os itens e informa a disponibilidade alterada. É possível repor o estoque pelo mesmo endpoint; vendas anteriores não são descontadas novamente do valor informado.
+
+### Reset integral
+
+Com os mocks ativos, execute no console. Feche outras abas da aplicação antes, para não manter escritas e drafts de outra aba:
+
+```js
+const response = await fetch('/api/scenarios/reset', { method: 'POST' })
+if (!response.ok) throw new Error('Não foi possível solicitar o reset.')
+const { reload } = await response.json()
+window.location.assign(reload)
+```
+
+A recarga faz parte da operação. O POST limpa somente chaves `kurio:` de `localStorage` e `sessionStorage` e marca o reset pendente. No bootstrap seguinte, a limpeza é repetida antes de criar as contas: isso elimina também escritas tardias da página anterior. O cenário só está pronto quando a nova página termina de carregar.
+
+São restaurados os dois usuários e senhas iniciais, catálogo, preços e estoque. Favoritos, carrinhos de visitante e usuários, carteiras/conexões, perfil/avatar, sessões, cotações, pedidos, tentativas de compra, drafts e todas as flags/sequências são apagados. A recarga descarta estado em memória, cache, requests, timers e subscriptions antigos. O worker permanece instalado. IDs dos usuários e salts são recriados; o cenário funcional inicial é o mesmo em resets consecutivos. Dados sem o prefixo do projeto são preservados.
 
 ## Assets
 
-Faltam estes arquivos, referenciados pelas fixtures e pelas telas:
+Os quatro arquivos referenciados pelas fixtures e pelas telas estão presentes:
 
 - `public/images/nfts/emerald-ape.png`
 - `public/images/nfts/sage-nomad.png`
 - `public/images/nfts/neon-vessel.png`
 - `public/images/nfts/golden-beat.png`
 
-As duas primeiras imagens também aparecem no hero. As quatro são reutilizadas pelos 24 NFTs e seguem para detalhe, carrinho, cotação e recibo. Precisam ser recuperadas dos assets corretos do Figma e adicionadas nesses caminhos, respeitando maiúsculas e minúsculas. Nenhuma imagem substituta foi adicionada.
+As duas primeiras imagens também aparecem no hero. As quatro são reutilizadas pelos 24 NFTs e seguem para detalhe, carrinho, cotação e recibo. Os arquivos existentes têm cabeçalho PNG: Emerald Ape em 450×450 e os demais em 250×250. A correspondência com o Figma ainda exige conferência visual. Nenhuma imagem foi alterada nesta tarefa.
 
 `public/favicon.svg`, `public/icons.svg` e `public/mockServiceWorker.js` estão presentes. Geist Variable é importada de `@fontsource-variable/geist`; seus cinco arquivos WOFF2 são empacotados localmente pelo Vite. O CSS do `body` usa também `Courier New`, com fallback `monospace`, dependente do sistema. A tipografia e a composição visual não foram alteradas nesta revisão.
 
@@ -145,12 +194,11 @@ Não foi feito deploy nem acesso a uma conta Vercel. Após publicar, validar por
 
 ## Pendências para a entrega
 
-- Recuperar as quatro imagens do Figma e conferir fidelidade visual e tipografia.
-- Implementar reset integral acessível e cenários configuráveis ainda ausentes.
+- Conferir a fidelidade das imagens existentes e da tipografia em relação ao Figma.
 - Publicar a versão final e validar rotas, estáticos e mocks no domínio público.
 - Fazer auditorias Lighthouse de início e detalhe, mobile e desktop, com três medições por combinação e medianas, LCP, CLS, TBT e relatórios HTML/JSON. Não há configuração nem resultados de Lighthouse entregues.
 - Produzir screenshots estáveis de início, detalhe, carrinho e pagamento, versionar baselines e adicionar regressão visual. Capturas de falha do Playwright não substituem essas baselines.
-- Completar a evidência de responsividade em 768 px, teclado, foco, skeletons e demais cenários do enunciado sem cobertura nos testes existentes.
+- Completar a evidência de responsividade em 768 px, teclado, foco e demais cenários do enunciado sem cobertura nos testes existentes. Skeletons de catálogo, detalhe e carrinho já têm cobertura de lentidão.
 
 O build atual passa, mas emite um aviso de chunk acima de 500 kB. Esse ponto deve entrar na análise de performance; não houve mudança de arquitetura ou ajuste do limite para ocultar o aviso.
 

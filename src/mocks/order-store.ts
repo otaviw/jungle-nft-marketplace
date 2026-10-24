@@ -18,6 +18,7 @@ interface OrderDatabase {
 }
 
 const storageKey = 'kurio:orders:v1'
+const availabilityKey = 'kurio:catalog-availability:v1'
 
 const initialStock = new Map(
     nfts.flatMap((nft) =>
@@ -40,25 +41,50 @@ function writeDatabase(database: OrderDatabase) {
     localStorage.setItem(storageKey, JSON.stringify(database))
 }
 
+function soldQuantity(orders: StoredOrder[], nftId: string, editionId: string) {
+    return orders.reduce((total, order) => total + order.snapshot.cart.items
+        .filter(item => item.nftId === nftId && item.editionId === editionId)
+        .reduce((sum, item) => sum + item.quantity, 0), 0)
+}
+
+function readAvailability(): Record<string, Record<string, number>> {
+    return JSON.parse(localStorage.getItem(availabilityKey) ?? '{}') as
+        Record<string, Record<string, number>>
+}
+
+export function changeNftAvailability(nftId: string, editionId: string, available: number) {
+    const nft = nfts.find(item => item.id === nftId)
+    if (!nft?.editions.some(edition => edition.id === editionId)) {
+        return null
+    }
+
+    const confirmed = readDatabase().orders.filter(order => order.status === 'confirmed')
+    const overrides = readAvailability()
+    // O controle informa o estoque atual. Guarda a base somando as vendas já
+    // confirmadas, para que restoreInventory desconte somente uma vez.
+    overrides[nftId] = {
+        ...overrides[nftId],
+        [editionId]: available + soldQuantity(confirmed, nftId, editionId),
+    }
+    localStorage.setItem(availabilityKey, JSON.stringify(overrides))
+    restoreInventory()
+    return nft
+}
+
 export function restoreInventory() {
     const confirmed = readDatabase().orders.filter(
         (order) => order.status === 'confirmed',
     )
+    const overrides = readAvailability()
 
     for (const nft of nfts) {
         for (const edition of nft.editions) {
-            const sold = confirmed.reduce((total, order) => {
-                return total + order.snapshot.cart.items
-                    .filter(
-                        (item) => item.nftId === nft.id
-                            && item.editionId === edition.id,
-                    )
-                    .reduce((sum, item) => sum + item.quantity, 0)
-            }, 0)
+            const sold = soldQuantity(confirmed, nft.id, edition.id)
 
             edition.available = Math.max(
                 0,
-                (initialStock.get(`${nft.id}:${edition.id}`) ?? 0) - sold,
+                (overrides[nft.id]?.[edition.id]
+                    ?? initialStock.get(`${nft.id}:${edition.id}`) ?? 0) - sold,
             )
         }
     }

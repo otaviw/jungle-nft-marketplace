@@ -5,6 +5,59 @@ import {
     registerWallet,
     reviewCheckout,
 } from './helpers'
+import { mockApi } from './mock-api'
+import type { Order } from '../src/types/order'
+
+test('reconexão durante pedido pendente recupera o mesmo pedido por REST', async ({ page }) => {
+    const initialTime = new Date('2026-10-24T12:00:00Z').getTime()
+    await page.clock.setFixedTime(initialTime)
+    const orderPosts: string[] = []
+    page.on('request', request => {
+        if (new URL(request.url()).pathname === '/api/orders' && request.method() === 'POST') {
+            orderPosts.push(request.postData() ?? '')
+        }
+    })
+    await login(page)
+    await registerWallet(page)
+    await addNft(page)
+    await reviewCheckout(page)
+    await page.getByRole('button', { name: 'Confirmar compra', exact: true }).click()
+    await expect(page).toHaveURL(/\/orders\/[a-zA-Z0-9-]+/)
+    const orderId = new URL(page.url()).pathname.split('/').at(-1)!
+    await expect(page.getByRole('heading', { name: 'Aguardando confirmação', exact: true })).toBeVisible()
+    await expect.poll(() => page.evaluate(() => {
+        const detail = { action: 'probe', scope: 'order', handled: 0 }
+        window.dispatchEvent(new CustomEvent('kurio:scenario:realtime', { detail }))
+        return detail.handled
+    })).toBeGreaterThan(0)
+    const before = await mockApi<Order>(page, `/orders/${orderId}`)
+    expect(before.status).toBe('pending')
+
+    const reconciliation = page.waitForResponse(response =>
+        new URL(response.url()).pathname === `/api/orders/${orderId}`
+        && response.request().method() === 'GET' && response.status() === 200,
+    )
+    const disconnected = await page.evaluate(() => {
+        const detail = { action: 'disconnect', scope: 'order', handled: 0 }
+        window.dispatchEvent(new CustomEvent('kurio:scenario:realtime', { detail }))
+        return detail.handled
+    })
+    expect(disconnected).toBeGreaterThan(0)
+    await expect(page.getByRole('status').filter({ hasText: 'Conexão interrompida' })).toBeVisible()
+    const recovered = await (await reconciliation).json() as Order
+    expect(recovered.id).toBe(orderId)
+    expect(recovered.status).toBe('pending')
+    expect(recovered.snapshot).toEqual(before.snapshot)
+    await expect(page.getByRole('status').filter({ hasText: 'Acompanhamento em tempo real conectado.' })).toBeVisible()
+
+    await page.clock.setFixedTime(initialTime + 4000)
+    await expect(page.getByRole('heading', { name: 'Seus NFTs agora estão na sua carteira', exact: true })).toBeVisible()
+    await expect(page).toHaveURL(new RegExp(`/orders/${orderId}$`))
+    expect(orderPosts).toHaveLength(1)
+    const confirmed = await mockApi<Order>(page, `/orders/${orderId}`)
+    expect(confirmed.status).toBe('confirmed')
+    expect(confirmed.snapshot).toEqual(before.snapshot)
+})
 
 test('reconexão recupera o preço por REST mesmo sem eventos do catálogo', async ({
     page,

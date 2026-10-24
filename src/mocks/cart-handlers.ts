@@ -5,6 +5,7 @@ import { getSession } from './auth-store'
 import { createCartView } from './cart-summary'
 import { readCart, writeCart } from './cart-store'
 import { nfts } from './fixtures'
+import { simulateNetwork } from './network-scenarios'
 
 const quantitySchema = z.object({
     quantity: z.number().int().positive().safe(),
@@ -54,7 +55,8 @@ function withCart(
 
 export const cartHandlers = [
     http.get('/api/cart', async ({ request }) => {
-        await delay(300)
+        const failure = await simulateNetwork('cart', 300)
+        if (failure) return failure
 
         return withCart(request, (cart) =>
             HttpResponse.json(createCartView(cart)),
