@@ -1,5 +1,6 @@
 import { useMutation, useQuery } from '@tanstack/react-query'
 import { Link } from '@tanstack/react-router'
+import { LogIn } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { logout, sessionOptions } from '@/lib/session'
 
@@ -27,18 +28,20 @@ export function AccountMenu() {
             <Link
                 to="/login"
                 search={{ mode: 'login', redirect: '/' }}
-                className="inline-flex items-center rounded-md bg-primary px-4 py-2 text-sm font-bold text-primary-foreground"
+                className="account-login inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-bold text-primary-foreground"
             >
+                <LogIn size={17} aria-hidden="true" />
                 Entrar
             </Link>
         )
     }
 
     return (
-        <div className="flex flex-wrap items-center gap-3">
+        <div className="account-menu">
             <Link
                 to="/profile"
-                className="max-w-32 truncate text-xs underline underline-offset-4"
+                className="account-name text-xs underline underline-offset-4"
+                title={session.data.user.name}
             >
                 {session.data.user.name}
             </Link>

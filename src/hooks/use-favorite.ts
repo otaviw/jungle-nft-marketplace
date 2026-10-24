@@ -106,9 +106,13 @@ export function useFavorite(nftId: string) {
                     mutationKey: ['favorites', userId],
                 }) === 1
             ) {
-                return queryClient.invalidateQueries({
-                    queryKey: favoritesKey,
-                })
+                return Promise.all([
+                    queryClient.invalidateQueries({ queryKey: favoritesKey }),
+                    queryClient.invalidateQueries({
+                        predicate: query => query.queryKey[0] === 'nfts'
+                            && Boolean((query.queryKey[1] as { favorites?: boolean })?.favorites),
+                    }),
+                ])
             }
         },
     })

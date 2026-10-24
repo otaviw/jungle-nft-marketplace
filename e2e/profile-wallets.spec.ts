@@ -367,10 +367,23 @@ test('carteiras validam endereço e duplicidade e persistem edições', async ({
     await primary.getByLabel('Apelido da carteira', { exact: true })
         .fill('Principal atualizada')
 
+    const updatedWalletResponse = page.waitForResponse((response) =>
+        response.url().endsWith('/api/wallets/primary')
+        && response.request().method() === 'PUT',
+    )
+
     await primary.getByRole('button', {
         name: 'Salvar carteira',
         exact: true,
     }).click()
+
+    // A mensagem de sucesso da criação anterior pode continuar visível.
+    // Aguarde esta atualização antes de recarregar a página.
+    const updatedWallet = await updatedWalletResponse
+    expect(updatedWallet.ok()).toBe(true)
+    expect(await updatedWallet.json()).toMatchObject({
+        nickname: 'Principal atualizada',
+    })
 
     await expect(primary.getByRole('status')).toHaveText(
         'Carteira salva.',

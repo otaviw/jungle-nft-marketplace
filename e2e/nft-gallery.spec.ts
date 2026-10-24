@@ -32,7 +32,7 @@ test('galeria seleciona recortes, amplia a imagem e mantém a seleção de ediç
     const details = page.getByRole('tab', { name: 'Detalhes do NFT', exact: true })
     const reviews = page.getByRole('tab', { name: 'Avaliações de colecionadores', exact: true })
     await reviews.click()
-    await expect(page.getByRole('tabpanel')).toContainText('Ainda não há avaliações')
+    await expect(page.getByRole('tabpanel').getByRole('list', { name: 'Comentários de colecionadores', exact: true }).getByRole('listitem')).toHaveCount(3)
     await page.keyboard.press('Home')
     await expect(details).toHaveAttribute('aria-selected', 'true')
     await expect(details).toBeFocused()

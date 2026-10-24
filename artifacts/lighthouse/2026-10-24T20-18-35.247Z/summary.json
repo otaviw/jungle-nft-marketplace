@@ -1,0 +1,97 @@
+{
+  "startedAt": "2026-10-24T20:18:35.247Z",
+  "completedAt": "2026-10-24T20:21:41.915Z",
+  "validRuns": 12,
+  "targets": {
+    "performance": 90,
+    "accessibility": 95,
+    "best-practices": 95,
+    "seo": 90
+  },
+  "medians": [
+    {
+      "page": "home",
+      "profile": "mobile",
+      "scores": {
+        "performance": 83,
+        "accessibility": 100,
+        "best-practices": 100,
+        "seo": 92
+      },
+      "metrics": {
+        "largest-contentful-paint": 3745.738799999999,
+        "cumulative-layout-shift": 0.00002459690073030577,
+        "total-blocking-time": 162
+      },
+      "meetsTargets": {
+        "performance": false,
+        "accessibility": true,
+        "best-practices": true,
+        "seo": true
+      }
+    },
+    {
+      "page": "nft-001",
+      "profile": "mobile",
+      "scores": {
+        "performance": 87,
+        "accessibility": 100,
+        "best-practices": 100,
+        "seo": 92
+      },
+      "metrics": {
+        "largest-contentful-paint": 3393.397199999999,
+        "cumulative-layout-shift": 0,
+        "total-blocking-time": 121.14962500000001
+      },
+      "meetsTargets": {
+        "performance": false,
+        "accessibility": true,
+        "best-practices": true,
+        "seo": true
+      }
+    },
+    {
+      "page": "home",
+      "profile": "desktop",
+      "scores": {
+        "performance": 99,
+        "accessibility": 100,
+        "best-practices": 100,
+        "seo": 92
+      },
+      "metrics": {
+        "largest-contentful-paint": 866.2339,
+        "cumulative-layout-shift": 0.0006656664582700981,
+        "total-blocking-time": 7.5
+      },
+      "meetsTargets": {
+        "performance": true,
+        "accessibility": true,
+        "best-practices": true,
+        "seo": true
+      }
+    },
+    {
+      "page": "nft-001",
+      "profile": "desktop",
+      "scores": {
+        "performance": 99,
+        "accessibility": 100,
+        "best-practices": 100,
+        "seo": 92
+      },
+      "metrics": {
+        "largest-contentful-paint": 805.4874,
+        "cumulative-layout-shift": 0.000659025076755299,
+        "total-blocking-time": 0
+      },
+      "meetsTargets": {
+        "performance": true,
+        "accessibility": true,
+        "best-practices": true,
+        "seo": true
+      }
+    }
+  ]
+}

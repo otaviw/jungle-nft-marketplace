@@ -1,0 +1,5 @@
+{
+  "at": "2026-10-24T19:32:51.778Z",
+  "validRuns": 0,
+  "error": "AssertionError [ERR_ASSERTION]: Nenhuma fonte foi carregada\n    at validate (file:///C:/programa%C3%A7%C3%B5es/jungle-nft-marketplace/scripts/lighthouse.mjs:82:10)\n    at async file:///C:/programa%C3%A7%C3%B5es/jungle-nft-marketplace/scripts/lighthouse.mjs:132:28"
+}

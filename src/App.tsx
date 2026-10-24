@@ -19,12 +19,15 @@ function App() {
 
       <MarketplaceHeader filtersOpen={filtersOpen} onFilters={() => {
         setFiltersOpen(value => !value)
-        if (!filtersOpen) requestAnimationFrame(() => document.querySelector<HTMLSelectElement>('#catalog-filters select')?.focus())
+        if (!filtersOpen) requestAnimationFrame(() => document.querySelector<HTMLInputElement>('#catalog-filters input[type=radio]')?.focus())
       }} />
 
       <main>
         <Hero />
-        <Catalog filtersOpen={filtersOpen} onCloseFilters={() => setFiltersOpen(false)} />
+        <Catalog filtersOpen={filtersOpen} onCloseFilters={() => {
+          setFiltersOpen(false)
+          requestAnimationFrame(() => document.querySelector<HTMLButtonElement>('.filter-toggle')?.focus())
+        }} />
         <HomeSections />
       </main>
       <MarketplaceFooter />

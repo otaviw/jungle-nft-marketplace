@@ -36,6 +36,8 @@ export const nfts: Nft[] = Array.from({ length: 24 }, (_, index) => {
                 available: index % 3 === 0 ? 0 : 2,
             },
         ],
+        listedAt: Date.UTC(2026, 9, 24 - index),
+        popularity: (index * 37 + 19) % 100,
         version: 1,
     }
 })

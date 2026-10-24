@@ -14,7 +14,7 @@ export function NftGallery({ nft }: { nft: Nft }) {
     const dialog = useRef<HTMLDialogElement>(null)
     return (
         <section className="nft-gallery" aria-label="Galeria do NFT">
-            <div className="gallery-thumbnails">{views.map(view => <button key={view.id} type="button" aria-label={view.label} aria-pressed={selected === view.id} onClick={() => setSelected(view.id)}><img src={nft.image} alt="" width={100} height={100} data-view={view.id} /></button>)}</div>
+            <div className="gallery-thumbnails">{views.map((view, index) => <button key={view.id} type="button" aria-label={view.label} aria-pressed={selected === view.id} onClick={() => setSelected(view.id)}><img src={nft.image} alt="" width={100} height={100} fetchPriority={index === 0 ? 'high' : undefined} data-view={view.id} /></button>)}</div>
             <button type="button" className="gallery-stage" aria-label="Ampliar imagem do NFT" onClick={() => dialog.current?.showModal()}>
                 <img src={nft.image} alt={`${nft.name} — imagem principal`} width={450} height={450} fetchPriority="high" data-view={selected} />
                 <span className="gallery-zoom" aria-hidden="true"><Search /></span>

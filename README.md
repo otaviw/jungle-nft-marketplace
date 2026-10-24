@@ -4,6 +4,8 @@ Implementação do [challenge de frontend da Jungle](https://github.com/junglega
 
 ## Setup
 
+URL pública informada para a entrega: [kurio-nft-pied.vercel.app](https://kurio-nft-pied.vercel.app/). A versão local desta etapa não foi republicada nem comparada com esse deploy.
+
 Ambiente validado com Node.js 22.19 e npm. Instale as versões do lockfile:
 
 ```sh
@@ -46,6 +48,7 @@ O cupom `KURIO10` dá 10% de desconto. `EXPIRADO` reproduz cupom expirado; outro
 | `npm run dev` | Servidor Vite; lê `.env.local` |
 | `npm run build` | Verificação de tipos com `tsc -b` e build Vite em `dist/` |
 | `npm run preview` | Servir o build localmente; não gera outro build |
+| `npm run audit:lighthouse` | Build com mocks e 12 auditorias Lighthouse sequenciais; HTML/JSON, validações e medianas em `artifacts/lighthouse/` |
 | `npm run lint` | ESLint |
 | `npm run test:e2e` | Toda a suíte Playwright, desktop e mobile |
 | `npm run test:e2e -- e2e/profile-wallets.spec.ts` | Perfil, senha, avatar e carteiras |
@@ -55,7 +58,44 @@ O cupom `KURIO10` dá 10% de desconto. `EXPIRADO` reproduz cupom expirado; outro
 
 Instale o navegador dos testes uma vez com `npx playwright install chromium`. O Playwright gera o build com `VITE_ENABLE_MOCKS=true`, inicia preview em `127.0.0.1:4173` e executa Chromium em 1440×900 e 390×844. A porta precisa estar livre. Cada teste recebe um contexto novo de navegador. Relatórios ficam em `playwright-report/`; traces, vídeos e screenshots são retidos nas falhas em `test-results/`. Esses diretórios são ignorados pelo Git.
 
-Não existem scripts separados de typecheck, reset ou Lighthouse. A checagem de tipos faz parte do build. A suíte atual não contém comparações com screenshots de referência.
+Não existem scripts separados de typecheck ou reset. A checagem de tipos faz parte do build. A suíte atual não contém comparações com screenshots de referência.
+
+## Auditorias Lighthouse
+
+Requer Node.js >=22.19, dependências do lockfile (`npm ci`) e Chrome instalado. Para indicar outro executável Chromium compatível, defina `CHROME_PATH`. Execute sem testes Playwright simultâneos e com a porta 4175 livre:
+
+```sh
+npm run audit:lighthouse
+```
+
+No PowerShell com bloqueio de scripts, use `npm.cmd run audit:lighthouse`. O comando faz o build de produção com `VITE_ENABLE_MOCKS=true` explicitamente, inicia o preview em `http://127.0.0.1:4175` e audita `/` e `/nfts/nft-001` três vezes em cada perfil (mobile padrão Lighthouse e preset desktop), sequencialmente. A configuração está em `scripts/lighthouse.config.mjs`; Lighthouse, Puppeteer Core e Chrome Launcher têm versões fixadas no lockfile.
+
+Cada medição usa um perfil Chrome novo, cache/storage limpos e throttling simulado do respectivo perfil. Não altera latências dos mocks, animações, conteúdo ou funcionalidades. Depois da navegação medida, valida MSW, cenário padrão, catálogo com 24 NFTs, detalhe Emerald Ape, imagens decodificadas e a fonte efetivamente renderizada pelo Chrome. A rolagem para imagens lazy e as chamadas extras de validação ocorrem após a auditoria. O CSS atual usa fontes de sistema (Consolas e alternativas monospace); a importação de Geist permanece sem download quando não utilizada.
+
+Os arquivos ficam em `artifacts/lighthouse/<data-hora-UTC>/`:
+
+- `home-{mobile|desktop}-{1|2|3}.{html|json}` e `nft-001-{mobile|desktop}-{1|2|3}.{html|json}`: 12 pares de relatórios completos.
+- `*.validation.json`: evidências de conteúdo e recursos por medição.
+- `summary.md` e `summary.json`: medianas independentes de Performance, Accessibility, Best Practices, SEO, LCP, CLS e TBT; metas por categoria.
+- `runs.json` e `environment.json`: valores individuais, versões, hardware/OS, Chrome, emulação, throttling, avisos e condições efetivas.
+- `build.log` e `build-sha256.json`: saída do build e hashes dos arquivos servidos.
+
+Metas: Performance/SEO >=90 e Accessibility/Best Practices >=95. Resultado abaixo da meta é reportado, sem invalidar a medição ou modificar a aplicação. Erros de execução/carregamento interrompem o comando com código não zero e `failure.json`; execuções incompletas não produzem resumo de 12 auditorias válidas. O preview local não comprova HTTPS, cabeçalhos ou regras do deploy público. Fontes de sistema e condições da máquina podem mudar os resultados em outro ambiente.
+
+Resultados de 24/10/2026, evidências e causas dos resultados abaixo das metas: [análise das auditorias](docs/lighthouse-audit.md). Para verificar relatórios salvos sem abrir navegador: `node scripts/verify-lighthouse.mjs artifacts/lighthouse/<execução>`; acrescente `--check-build` para conferir também o `dist` atual contra os hashes auditados.
+
+Medianas finais do snapshot auditado, três medições por combinação:
+
+| Página/perfil | Performance | Accessibility | Best Practices | SEO |
+| --- | ---: | ---: | ---: | ---: |
+| Home mobile | 83 | 100 | 100 | 92 |
+| Detalhe mobile | 87 | 100 | 100 | 92 |
+| Home desktop | 99 | 100 | 100 | 92 |
+| Detalhe desktop | 99 | 100 | 100 | 92 |
+
+**Performance mobile ficou abaixo da meta 90 nas duas páginas.** [Resumo com LCP, CLS e TBT](artifacts/lighthouse/2026-10-24T20-18-35.247Z/summary.md), [medianas JSON](artifacts/lighthouse/2026-10-24T20-18-35.247Z/summary.json) e exemplos HTML: [Home mobile](artifacts/lighthouse/2026-10-24T20-18-35.247Z/home-mobile-1.html), [detalhe mobile](artifacts/lighthouse/2026-10-24T20-18-35.247Z/nft-001-mobile-1.html). Os 12 pares HTML/JSON, ambiente e configuração estão reunidos também no [anexo de entrega](artifacts/kurio-lighthouse-final.zip). Os arquivos estão no working tree e no anexo; como não houve commit/push, sua publicação no repositório remoto depende da entrega. Os links são relativos, sem dependência de caminhos `C:/`.
+
+A correção atual do cabeçalho é posterior ao snapshot Lighthouse e não foi reauditada. O relatório histórico registra a tentativa anterior revertida; ela foi substituída nesta rodada pela reutilização validada do menu mobile. Foram executados lint, build e uma conferência de navegador somente do cabeçalho; não houve Lighthouse nem suíte completa nesta rodada. Uma autorização de testes havia sido recusada anteriormente; a conferência atual foi autorizada e executada.
 
 ## Cenários disponíveis
 
@@ -190,7 +230,7 @@ As referências usadas estão em `pages figma/Desktop` e `pages figma/Mobile`: i
 
 Home e detalhe usam o header e footer do marketplace. Carrinho, checkout e recibo agora reutilizam esses componentes; as telas de conta mantêm suas composições anteriores. As mudanças compartilhadas ficam nos tokens de cor e tipografia. Busca, filtros e paginação continuam na URL, e a escolha de edição usa rádios no formato de pills. O botão “Comprar NFT” continua adicionando ao carrinho; não confirma uma compra.
 
-A galeria tem quatro recortes selecionáveis da própria imagem e ampliação em diálogo, com fechamento por Escape e retorno do foco. No desktop, as miniaturas ficam ao lado da obra; no mobile, ficam no diálogo aberto ao tocar a imagem. O diálogo explica que os recortes pertencem à mesma imagem: não há fotografias alternativas fornecidas. Avaliações, contratos blockchain, atributos e contagens ilustrativas do Figma não foram transformados em dados fictícios novos: a tela usa os dados reais das fixtures e informa a ausência de avaliações. Newsletter e leitura editorial não enviam inscrições nem simulam sucesso; os destinos auxiliares não implementados são apresentados como texto.
+A galeria tem quatro recortes da própria imagem e ampliação em diálogo, com Escape e retorno do foco. Miniaturas ficam ao lado da obra no desktop e no diálogo no mobile; não há fotografias alternativas fornecidas. Avaliações vêm de `GET /api/nfts/:id/reviews`, com autores fictícios e média/total derivados das notas; o NFT principal tem 19 avaliações e média 4,8. Não há publicação de comentários nem blockchain real. Newsletter e leitura editorial não enviam inscrições nem simulam sucesso.
 
 Para gerar capturas de revisão e conferir carregamento de imagens e largura da página, inicie o Vite na porta usada pelo script:
 
@@ -208,7 +248,7 @@ As capturas de home e detalhe em 390, 768 e 1440 px e `checks.json` ficam em `ar
 
 No Windows, `scripts/compare-visual.ps1` monta os PNGs de referência e implementação lado a lado, na mesma escala. Recebe `-CaptureFolder` e `-OutputFolder`, relativos a `artifacts/visual-review`. A segunda revisão usa `revision-2-before` para o estado anterior e `comparison-after` para a comparação final. Essas imagens foram inspecionadas separadamente em desktop e mobile; carregamento de assets e largura do documento são verificações técnicas adicionais, não medidas de fidelidade visual.
 
-Diferenças ainda conhecidas: a fonte exata não foi identificada; o catálogo tem as três categorias, duas edições e 24 NFTs das fixtures; não há dados de popularidade ou datas para ativar “Em alta” e “Novos lançamentos”. A API atual também não aceita intervalo de preços: a ordenação por preço continua disponível, sem simular um filtro que não existe. A composição de 768 px é uma adaptação, pois não há frame específico de tablet.
+Diferenças ainda conhecidas: a fonte exata não foi identificada; o catálogo usa as categorias, duas edições e 24 NFTs das fixtures. “Em alta” e “Novos lançamentos” usam popularidade e datas determinísticas simuladas. A API aceita `minPrice`/`maxPrice` inclusivos com precisão de wei, combinados com os demais filtros e paginação. A composição de 768 px é uma adaptação, sem frame específico de tablet.
 
 Capturas, medidas e lista dos arquivos alterados estão em [docs/visual-review.md](docs/visual-review.md).
 
@@ -232,16 +272,44 @@ No mobile, “Ver NFTs e taxas” expande o resumo e “Dados do colecionador”
 
 O fallback entrega `index.html` para as rotas da SPA, incluindo acesso direto e refresh de `/nfts/nft-001`, `/profile`, `/wallets`, `/cart`, `/checkout` e `/orders/:id`. A autenticação continua no Router. Os caminhos `/api`, `/assets`, `/images`, `/fonts` e os arquivos públicos nomeados ficam fora do fallback; arquivos ausentes nesses caminhos não devem retornar HTML da SPA. O worker recebe `Cache-Control: no-cache`. A configuração usa [rewrites da Vercel](https://vercel.com/docs/project-configuration/vercel-json), preservando os arquivos existentes.
 
-Não foi feito deploy nem acesso a uma conta Vercel. Após publicar, validar por HTTPS: acesso direto e refresh, worker com conteúdo JavaScript, assets/fontes, MSW ativo e eventos Socket.IO. O preview local comprova o build, mas não executa as regras de hospedagem da Vercel.
+A URL pública informada é [kurio-nft-pied.vercel.app](https://kurio-nft-pied.vercel.app/). Não houve acesso à conta Vercel nem novo deploy nesta etapa. Permanece necessário conferir no domínio público o snapshot entregue, acesso direto e refresh, worker JavaScript, assets/fontes, MSW e Socket.IO. O preview local não executa as regras de hospedagem da Vercel.
 
 ## Pendências para a entrega
 
 - Conferir a fidelidade das imagens existentes e da tipografia em relação ao Figma.
-- Publicar a versão final e validar rotas, estáticos e mocks no domínio público.
-- Fazer auditorias Lighthouse de início e detalhe, mobile e desktop, com três medições por combinação e medianas, LCP, CLS, TBT e relatórios HTML/JSON. Não há configuração nem resultados de Lighthouse entregues.
+- Confirmar que a URL pública contém a versão final e validar rotas, estáticos e mocks no domínio público.
+- Tratar Performance mobile abaixo de 90 na [comparação antes/depois do Lighthouse](docs/lighthouse-audit.md): Home 83 e detalhe 87; Accessibility chegou a 100 nas quatro combinações. O cabeçalho foi corrigido e conferido posteriormente, sem nova auditoria.
 - Produzir screenshots estáveis de início, detalhe, carrinho e pagamento, versionar baselines e adicionar regressão visual. Capturas de falha do Playwright não substituem essas baselines.
-- Completar a evidência de responsividade em 768 px, teclado, foco e demais cenários do enunciado sem cobertura nos testes existentes. Skeletons de catálogo, detalhe e carrinho já têm cobertura de lentidão.
+- Completar os cenários de responsividade/acessibilidade ainda não cobertos. O cabeçalho foi conferido em 390, 768, 1024 e 1440 px e na transição 1199/1200 px, com teclado, foco, busca, carrinho/conta e ausência de overflow; isso não valida todas as páginas. Skeletons de catálogo, detalhe e carrinho têm cobertura de lentidão.
 
-O build atual passa, mas emite um aviso de chunk acima de 500 kB. Esse ponto deve entrar na análise de performance; não houve mudança de arquitetura ou ajuste do limite para ocultar o aviso.
+O build atual passa sem o aviso anterior de chunk acima de 500 kB. As páginas usam divisão de código por rota; o limite não foi aumentado. O custo de bootstrap/mocks e a meta de Performance mobile continuam pendentes.
+
+Baselines automatizadas de screenshots: não foram encontrados arquivos de baseline em `e2e/`, nem chamadas `toHaveScreenshot`/`toMatchSnapshot` na suíte atual. Há capturas manuais em `artifacts/visual-review/current`, `comparison-after`, `commerce-current` e pastas correlatas, ignoradas pelo Git; são revisões, não baselines automatizadas. Os testes funcionais de filtros, avaliações, carrosséis e compra continuam existentes; a conferência atual não executou novamente a suíte completa.
 
 Contratos, políticas de estado e limitações estão em [ARCHITECTURE.md](ARCHITECTURE.md).
+
+### Navegação, visualizações e favoritos
+
+O header desktop acompanha a rolagem e indica a seção visível. Links para seções
+continuam operáveis quando o hash já está na URL. Filtros, ordenação, abas e
+paginação preservam o scroll, sem recarregar o documento.
+
+A partir de 1200 px, o header mantém a linha desktop com Início, Mercado, Criadores e Aprenda. Abaixo desse limite, o acionador compacto reutiliza `MobileNavigation` e seu diálogo nativo com as quatro opções, carrinho e conta. Em 390 px a busca continua no header e a barra inferior permanece; em 768/1024 px permanecem as ações da linha superior. Escape fecha o diálogo e devolve o foco. Os estilos novos usam Tailwind; a composição de 1440 px foi preservada.
+
+O hero mantém autoavanço, pontinhos manuais e pausa/retomada visível somente ao foco de teclado, sem deslocar o layout; movimento reduzido desativa o autoavanço. Os relacionados usam scroll horizontal com páginas de 2/3/5 cards conforme a largura, pontinhos, setas/Home/End e alinhamento da paginação no resize. As abas do detalhe mostram informações e avaliações. Nenhum desses componentes foi alterado nesta correção do header.
+
+Coleção e rede usam rádios nativos estilizados; a ordenação usa o Select shadcn.
+`view=all|new|trending` seleciona a visualização do catálogo. As fixtures possuem
+`listedAt` e `popularity` determinísticos: novos lançamentos correspondem aos seis
+dias mais recentes do conjunto de fixtures; em alta usa popularidade simulada
+quando a ordenação é “Listados recentemente”. A ordenação explícita por preço
+continua disponível nas três visualizações.
+
+`favorites=true` consulta somente favoritos pela API autenticada, antes de paginar.
+O filtro combina com busca, coleção, rede, visualização e ordenação. O coração da
+navegação mobile abre essa consulta; visitantes passam pelo login e retomam a
+intenção. A listagem tem chave de cache por usuário e é invalidada ao alterar
+favoritos; o cache privado dessa consulta é removido na troca/saída da sessão.
+Perfil e carteiras oferecem saída explícita para o catálogo no mobile.
+
+Os testes direcionados estão em `e2e/navigation-fixes.spec.ts` e `e2e/catalog.spec.ts`.

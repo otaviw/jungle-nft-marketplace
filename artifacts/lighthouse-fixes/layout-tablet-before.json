@@ -1,0 +1,97 @@
+{
+  "before": {
+    "x": 24,
+    "y": 148,
+    "width": 343,
+    "height": 343
+  },
+  "after": {
+    "x": 96,
+    "y": 130,
+    "width": 276,
+    "height": 276
+  },
+  "shifts": [
+    {
+      "time": 1386.6000000014901,
+      "value": 0.28547097156398105,
+      "sources": [
+        {
+          "node": "<footer class=\"marketplace-footer market-container\"><div class=\"footer-benefits\" id=\"criadores\"><div class=\"footer-benefit\"><span class=\"benefit-icon\" aria-hidden=\"true\">W</span><h3>Segurança da carteira</h3><p>Proteja sua carteira e colecione arte digital verificada com confiança.</p></div><div cla",
+          "previous": {
+            "x": 24,
+            "y": 587,
+            "width": 720,
+            "height": 257,
+            "top": 587,
+            "right": 744,
+            "bottom": 844,
+            "left": 24
+          },
+          "current": {
+            "x": 0,
+            "y": 0,
+            "width": 0,
+            "height": 0,
+            "top": 0,
+            "right": 0,
+            "bottom": 0,
+            "left": 0
+          }
+        }
+      ]
+    },
+    {
+      "time": 1411.199999999255,
+      "value": 0.002351199083017003,
+      "sources": [
+        {
+          "node": "<div class=\"detail-tabs\" role=\"tablist\" aria-label=\"Informações do NFT\"><button id=\"nft-details-tab\" type=\"button\" role=\"tab\" tabindex=\"0\" aria-selected=\"true\" aria-controls=\"nft-description-panel\">Detalhes do NFT</button><button id=\"nft-reviews-tab\" type=\"button\" role=\"tab\" tabindex=\"-1\" aria-selec",
+          "previous": {
+            "x": 24,
+            "y": 771.546875,
+            "width": 720,
+            "height": 38,
+            "top": 771.546875,
+            "right": 744,
+            "bottom": 809.546875,
+            "left": 24
+          },
+          "current": {
+            "x": 24,
+            "y": 796.359375,
+            "width": 720,
+            "height": 38,
+            "top": 796.359375,
+            "right": 744,
+            "bottom": 834.359375,
+            "left": 24
+          }
+        },
+        {
+          "node": "<div id=\"nft-description-panel\" role=\"tabpanel\" aria-labelledby=\"nft-details-tab\"><p>Emerald Ape #001 faz parte da seleção de arte digital da Kurio. Explore os detalhes da obra e escolha entre as edições disponíveis para sua coleção.</p><p>Confira a disponibilidade antes de adicionar ao carrinho. Os",
+          "previous": {
+            "x": 24,
+            "y": 809.546875,
+            "width": 720,
+            "height": 34.453125,
+            "top": 809.546875,
+            "right": 744,
+            "bottom": 844,
+            "left": 24
+          },
+          "current": {
+            "x": 24,
+            "y": 834.359375,
+            "width": 720,
+            "height": 9.640625,
+            "top": 834.359375,
+            "right": 744,
+            "bottom": 844,
+            "left": 24
+          }
+        }
+      ]
+    }
+  ]
+}

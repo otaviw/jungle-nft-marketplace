@@ -1,0 +1,5 @@
+{
+  "at": "2026-10-24T19:32:13.864Z",
+  "validRuns": 0,
+  "error": "TypeError: Failed to fetch browser webSocket URL from http://127.0.0.1:50674/json/version: fetch failed\n    at node:internal/deps/undici/undici:13510:13\n    at async getWSEndpoint (file:///C:/programa%C3%A7%C3%B5es/jungle-nft-marketplace/node_modules/puppeteer-core/lib/puppeteer/common/BrowserConnector.js:123:24)\n    at async getConnectionTransport (file:///C:/programa%C3%A7%C3%B5es/jungle-nft-marketplace/node_modules/puppeteer-core/lib/puppeteer/common/BrowserConnector.js:63:31)\n    at async _connectToBrowser (file:///C:/programa%C3%A7%C3%B5es/jungle-nft-marketplace/node_modules/puppeteer-core/lib/puppeteer/common/BrowserConnector.js:26:50)\n    at async file:///C:/programa%C3%A7%C3%B5es/jungle-nft-marketplace/scripts/lighthouse.mjs:120:21"
+}

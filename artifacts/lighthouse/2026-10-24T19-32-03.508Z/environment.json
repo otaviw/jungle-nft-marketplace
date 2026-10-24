@@ -1,0 +1,58 @@
+{
+  "startedAt": "2026-10-24T19:32:03.508Z",
+  "timezone": "America/Sao_Paulo",
+  "node": "v22.19.0",
+  "npm": "npm/11.10.1 node/v22.19.0 win32 x64 workspaces/false",
+  "versions": {
+    "lighthouse": "13.5.0",
+    "puppeteer-core": "25.16.0",
+    "chrome-launcher": "1.2.2",
+    "vite": "8.3.5"
+  },
+  "os": {
+    "platform": "win32",
+    "release": "10.0.26200",
+    "arch": "x64",
+    "cpu": "11th Gen Intel(R) Core(TM) i5-11300H @ 3.10GHz",
+    "logicalCpus": 8,
+    "totalMemoryGiB": 15.788383483886719
+  },
+  "origin": "http://127.0.0.1:4175",
+  "mocks": true,
+  "scenario": "default; fresh Chrome user data directory for every run",
+  "execution": "12 sequential cold navigations; no Playwright launched; native image/font requests; no content, motion or feature overrides; validation scroll/API checks only after measurement",
+  "gitHead": "f7bcafbd311d536dc79337ed5c60e4ff31a0aff9",
+  "gitStatusBefore": " M ARCHITECTURE.md\n M README.md\n M e2e/account-security.spec.ts\n M e2e/catalog.spec.ts\n M e2e/nft-gallery.spec.ts\n M e2e/profile-wallets.spec.ts\n M index.html\n M package-lock.json\n M package.json\n M src/App.tsx\n M src/components/home/catalog-filters.tsx\n M src/components/home/catalog.tsx\n M src/components/home/hero.tsx\n M src/components/layout/account-menu.tsx\n M src/components/layout/header.tsx\n M src/components/layout/marketplace-header.tsx\n M src/components/layout/mobile-navigation.tsx\n M src/hooks/use-favorite.ts\n M src/lib/catalog-search.ts\n M src/lib/session.ts\n M src/marketplace.css\n M src/mocks/favorite-handlers.ts\n M src/mocks/fixtures.ts\n M src/mocks/handlers.ts\n M src/pages/nft-detail.tsx\n M src/router.tsx\n M src/types/nft.ts\n?? artifacts/\n?? docs/superpowers/plans/2026-10-24-catalog-filters.md\n?? docs/superpowers/plans/2026-10-24-lighthouse.md\n?? docs/superpowers/plans/2026-10-24-nft-reviews.md\n?? e2e/navigation-fixes.spec.ts\n?? e2e/nft-reviews.spec.ts\n?? scripts/lighthouse.config.mjs\n?? scripts/lighthouse.mjs\n?? src/components/nft/nft-reviews.css\n?? src/components/nft/nft-reviews.tsx\n?? src/components/nft/related-carousel.tsx\n?? src/mocks/review-fixtures.ts\n?? src/mocks/review-handlers.ts\n?? src/types/review.ts\n",
+  "targets": {
+    "performance": 90,
+    "accessibility": 95,
+    "best-practices": 95,
+    "seo": 90
+  },
+  "settings": {
+    "onlyCategories": [
+      "performance",
+      "accessibility",
+      "best-practices",
+      "seo"
+    ],
+    "throttlingMethod": "simulate",
+    "disableStorageReset": false,
+    "maxWaitForLoad": 60000
+  },
+  "pages": [
+    {
+      "name": "home",
+      "path": "/"
+    },
+    {
+      "name": "nft-001",
+      "path": "/nfts/nft-001"
+    }
+  ],
+  "profiles": [
+    "mobile",
+    "desktop"
+  ],
+  "runs": 3
+}

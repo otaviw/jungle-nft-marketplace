@@ -118,6 +118,9 @@ test('outra conta não acessa pedido, cotação ou carteira do primeiro usuário
         }
     })
 
+    // O checkout mobile usa um cabeçalho compacto; a saída da conta
+    // permanece disponível no perfil em todos os tamanhos de tela.
+    await page.goto('/profile')
     await page.getByRole('button', {
         name: 'Sair',
         exact: true,

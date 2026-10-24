@@ -1,0 +1,97 @@
+{
+  "before": {
+    "x": 120,
+    "y": 148,
+    "width": 583,
+    "height": 583
+  },
+  "after": {
+    "x": 248,
+    "y": 130,
+    "width": 444,
+    "height": 444
+  },
+  "shifts": [
+    {
+      "time": 1372.199999999255,
+      "value": 0.007661320942628796,
+      "sources": [
+        {
+          "node": "<footer class=\"marketplace-footer market-container\"><div class=\"footer-benefits\" id=\"criadores\"><div class=\"footer-benefit\"><span class=\"benefit-icon\" aria-hidden=\"true\">W</span><h3>Segurança da carteira</h3><p>Proteja sua carteira e colecione arte digital verificada com confiança.</p></div><div cla",
+          "previous": {
+            "x": 120,
+            "y": 827,
+            "width": 1200,
+            "height": 17,
+            "top": 827,
+            "right": 1320,
+            "bottom": 844,
+            "left": 120
+          },
+          "current": {
+            "x": 0,
+            "y": 0,
+            "width": 0,
+            "height": 0,
+            "top": 0,
+            "right": 0,
+            "bottom": 0,
+            "left": 0
+          }
+        }
+      ]
+    },
+    {
+      "time": 1387.699999999255,
+      "value": 0.0026540490060558194,
+      "sources": [
+        {
+          "node": "<div id=\"nft-description-panel\" role=\"tabpanel\" aria-labelledby=\"nft-details-tab\"><p>Emerald Ape #001 faz parte da seleção de arte digital da Kurio. Explore os detalhes da obra e escolha entre as edições disponíveis para sua coleção.</p><p>Confira a disponibilidade antes de adicionar ao carrinho. Os",
+          "previous": {
+            "x": 120,
+            "y": 725.578125,
+            "width": 1200,
+            "height": 118.421875,
+            "top": 725.578125,
+            "right": 1320,
+            "bottom": 844,
+            "left": 120
+          },
+          "current": {
+            "x": 120,
+            "y": 750.390625,
+            "width": 1200,
+            "height": 93.609375,
+            "top": 750.390625,
+            "right": 1320,
+            "bottom": 844,
+            "left": 120
+          }
+        },
+        {
+          "node": "<div class=\"detail-tabs\" role=\"tablist\" aria-label=\"Informações do NFT\"><button id=\"nft-details-tab\" type=\"button\" role=\"tab\" tabindex=\"0\" aria-selected=\"true\" aria-controls=\"nft-description-panel\">Detalhes do NFT</button><button id=\"nft-reviews-tab\" type=\"button\" role=\"tab\" tabindex=\"-1\" aria-selec",
+          "previous": {
+            "x": 120,
+            "y": 687.578125,
+            "width": 1200,
+            "height": 38,
+            "top": 687.578125,
+            "right": 1320,
+            "bottom": 725.578125,
+            "left": 120
+          },
+          "current": {
+            "x": 120,
+            "y": 712.390625,
+            "width": 1200,
+            "height": 38,
+            "top": 712.390625,
+            "right": 1320,
+            "bottom": 750.390625,
+            "left": 120
+          }
+        }
+      ]
+    }
+  ]
+}

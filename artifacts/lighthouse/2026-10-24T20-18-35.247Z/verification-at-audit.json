@@ -1,0 +1,13 @@
+{
+  "verifiedAt": "2026-10-24T20:23:20.952Z",
+  "validRuns": 12,
+  "htmlReports": 12,
+  "jsonReports": 12,
+  "validationFiles": 12,
+  "decodedImageOccurrences": 150,
+  "renderedFonts": ["Consolas"],
+  "measuredApisSuccessful": true,
+  "mediansRecomputed": true,
+  "buildHashesChecked": true,
+  "note": "Registro preservado da verificação executada antes das reconstruções posteriores de dist. verification.json contém a última conferência offline dos relatórios históricos."
+}

@@ -1,0 +1,4 @@
+{
+  "validRuns": 3,
+  "reason": "Execução interrompida durante a validação posterior de nft-001-mobile-1: imagens lazy em páginas horizontais do novo carrossel exigiam rolagem da faixa. O validador foi corrigido para percorrer a faixa após a medição e limitar o tempo de decode. Esta rodada incompleta não entra na comparação final."
+}

@@ -41,7 +41,9 @@ function removePrivateQueries() {
     ])
 
     queryClient.removeQueries({
-        predicate: (query) => privateKeys.has(String(query.queryKey[0])),
+        predicate: (query) => privateKeys.has(String(query.queryKey[0]))
+            || (query.queryKey[0] === 'nfts'
+                && Boolean((query.queryKey[1] as { favorites?: boolean })?.favorites)),
     })
 }
 

@@ -6,7 +6,7 @@ import type { Nft } from '../src/types/nft'
 test('catálogo, detalhe e carrinho mostram skeleton durante lentidão', async ({ page }) => {
     await page.goto('/nfts/nft-002')
     await expect(page.getByRole('heading', { name: 'Sage Nomad #002' })).toBeVisible()
-    await page.locator('.related-grid article').first().waitFor()
+    await page.locator('.related-nfts article').first().waitFor()
 
     for (const scenario of [
         { resource: 'catalog', path: '/', loading: 'Carregando NFTs...', ready: '24 NFTs encontrados' },
@@ -28,7 +28,7 @@ for (const failure of ['network', 'http-503']) {
     test(`catálogo recupera após ${failure} sem ocultar o erro`, async ({ page }) => {
         await page.goto('/nfts/nft-001')
         await expect(page.getByRole('heading', { name: 'Emerald Ape #001' })).toBeVisible()
-        await page.locator('.related-grid article').first().waitFor()
+        await page.locator('.related-nfts article').first().waitFor()
         await mockApi(page, '/scenarios/network', {
             method: 'PUT',
             // Duas falhas incluem o retry único do QueryClient.

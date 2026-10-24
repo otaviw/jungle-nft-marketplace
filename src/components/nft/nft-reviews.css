@@ -1,0 +1,27 @@
+.nft-page .nft-title-row:has(.nft-review-badge) { align-items: center; flex-wrap: nowrap; gap: 12px; }
+.nft-page .nft-title-row:has(.nft-review-badge) h1 { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+.nft-review-badge { display: inline-flex; flex-shrink: 0; align-items: center; gap: 3px; min-width: 80px; min-height: 22px; padding: 2px 5px; border: 1px solid var(--primary); border-radius: 20px; color: var(--foreground); font-size: 12px; line-height: 16px; font-variant-numeric: tabular-nums; }
+.nft-review-placeholder { border-color: transparent; }
+.nft-review-badge > svg { color: var(--primary); flex-shrink: 0; }
+.nft-review-badge-count { color: var(--muted-foreground); }
+.nft-review-summary { display: flex; justify-content: flex-end; min-height: 28px; margin-bottom: 16px; padding-bottom: 10px; color: var(--foreground); font-size: 11px; line-height: 18px; }
+.nft-review-summary > span { display: flex; align-items: center; justify-content: flex-end; flex-wrap: wrap; gap: 6px; min-width: 0; }
+.nft-review-summary > .nft-review-state { font-size: inherit; line-height: 18px; }
+.nft-review-stars { position: relative; display: inline-block; flex-shrink: 0; color: #79502f; font-size: 14px; line-height: 1; letter-spacing: 1px; white-space: nowrap; }
+.nft-review-stars-fill { position: absolute; inset: 0 auto 0 0; overflow: hidden; color: var(--primary); }
+.nft-review-list { display: grid; gap: 12px; padding: 0; margin: 16px 0 0; list-style: none; min-width: 0; }
+.nft-review-card { min-width: 0; padding: 16px; border: 1px solid var(--border); border-radius: 8px; background: var(--card); overflow-wrap: anywhere; }
+.nft-review-card > header { display: flex; align-items: baseline; justify-content: space-between; flex-wrap: wrap; gap: 4px 12px; }
+.nft-page .nft-review-card h3 { margin: 0; font-size: 14px; line-height: 22px; }
+.nft-review-card time { color: var(--muted-foreground); font-size: 11px; }
+.nft-review-score { display: inline-flex; margin-top: 6px; }
+.nft-page .nft-review-card .nft-review-comment { margin: 8px 0 0; color: var(--muted-foreground); font-size: 14px; line-height: 1.7; }
+.nft-page .nft-review-demo, .nft-page .nft-review-state { margin: 0; color: var(--muted-foreground); font-size: 12px; line-height: 1.6; }
+.nft-review-state button { color: var(--primary); text-decoration: underline; text-underline-offset: 3px; }
+@media (max-width: 767px) {
+    .nft-page .nft-title-row:has(.nft-review-badge) { gap: 8px; }
+    .nft-review-badge { font-size: 11px; }
+    .nft-review-summary { font-size: 10px; }
+    .nft-review-card { padding: 12px; }
+    .nft-page .nft-review-card .nft-review-comment { font-size: 13px; }
+}

@@ -2,18 +2,12 @@ import {
     createRootRoute,
     createRoute,
     createRouter,
+    defaultParseSearch,
     Link,
+    lazyRouteComponent,
 } from '@tanstack/react-router'
-import App from './App'
 import { parseCatalogSearch } from '@/lib/catalog-search'
-import { NftDetailPage } from '@/pages/nft-detail'
-import { CartPage } from '@/pages/cart'
-import { AuthPage } from '@/pages/auth'
-import { ProfilePage } from '@/pages/profile'
 import { requireSession } from '@/lib/require-session'
-import { WalletsPage } from '@/pages/wallets'
-import { OrderPage } from '@/pages/order'
-import { CheckoutPage } from '@/pages/checkout'
 import { RootLayout } from '@/components/layout/root-layout'
 
 const rootRoute = createRootRoute({
@@ -32,19 +26,19 @@ const homeRoute = createRoute({
     getParentRoute: () => rootRoute,
     path: '/',
     validateSearch: parseCatalogSearch,
-    component: App,
+    component: lazyRouteComponent(() => import('./App')),
 })
 
 const nftDetailRoute = createRoute({
     getParentRoute: () => rootRoute,
     path: '/nfts/$nftId',
-    component: NftDetailPage,
+    component: lazyRouteComponent(() => import('@/pages/nft-detail'), 'NftDetailPage'),
 })
 
 const cartRoute = createRoute({
     getParentRoute: () => rootRoute,
     path: '/cart',
-    component: CartPage,
+    component: lazyRouteComponent(() => import('@/pages/cart'), 'CartPage'),
 })
 
 const authRoute = createRoute({
@@ -55,7 +49,7 @@ const authRoute = createRoute({
             ? 'register'
             : 'login'
 
-        const allowedRedirects = ['/', '/cart', '/checkout', '/profile', '/wallets']
+        const allowedRedirects = ['/', '/cart', '/checkout', '/profile', '/wallets', '/?favorites=true#catalogo']
 
         const requestedRedirect = typeof search.redirect === 'string'
             ? search.redirect
@@ -73,21 +67,21 @@ const authRoute = createRoute({
                 : '/'
         return { mode, redirect }
     },
-    component: AuthPage,
+    component: lazyRouteComponent(() => import('@/pages/auth'), 'AuthPage'),
 })
 
 const profileRoute = createRoute({
     getParentRoute: () => rootRoute,
     path: '/profile',
     beforeLoad: () => requireSession('/profile'),
-    component: ProfilePage,
+    component: lazyRouteComponent(() => import('@/pages/profile'), 'ProfilePage'),
 })
 
 const walletsRoute = createRoute({
     getParentRoute: () => rootRoute,
     path: '/wallets',
     beforeLoad: () => requireSession('/wallets'),
-    component: WalletsPage,
+    component: lazyRouteComponent(() => import('@/pages/wallets'), 'WalletsPage'),
 })
 
 const orderRoute = createRoute({
@@ -95,14 +89,14 @@ const orderRoute = createRoute({
     path: '/orders/$orderId',
     beforeLoad: ({ params }) =>
         requireSession(`/orders/${params.orderId}`),
-    component: OrderPage,
+    component: lazyRouteComponent(() => import('@/pages/order'), 'OrderPage'),
 })
 
 const checkoutRoute = createRoute({
     getParentRoute: () => rootRoute,
     path: '/checkout',
     beforeLoad: () => requireSession('/checkout'),
-    component: CheckoutPage,
+    component: lazyRouteComponent(() => import('@/pages/checkout'), 'CheckoutPage'),
 })
 
 const routeTree = rootRoute.addChildren([
@@ -118,6 +112,16 @@ const routeTree = rootRoute.addChildren([
 
 export const router = createRouter({
     routeTree,
+    parseSearch: query => {
+        const search: Record<string, unknown> = defaultParseSearch(query)
+        const params = new URLSearchParams(query)
+        // Numeric JSON parsing would round prices before wei validation.
+        for (const key of ['minPrice', 'maxPrice']) {
+            const raw = params.get(key)
+            if (raw !== null && !raw.startsWith('"')) search[key] = raw
+        }
+        return search
+    },
     scrollRestoration: true,
 })
 

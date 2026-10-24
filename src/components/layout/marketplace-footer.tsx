@@ -25,7 +25,7 @@ export function MarketplaceFooter() {
                 <div><h3>Meu perfil</h3><Link to="/profile">Meu perfil</Link><Link to="/wallets">Minhas carteiras</Link><span>Atividade</span><span>Estúdio do criador</span><span>Lista de interesse</span></div>
                 <div><h3>Central de ajuda</h3><span>Central de ajuda</span><span>Como comprar NFTs</span><span>Carteira e segurança</span><span>Política do mercado</span><span>Denunciar item</span></div>
                 <div><h3>Coleções</h3>{['Arte digital', 'Colecionáveis', 'Arte 3D'].map(category => <Link key={category} to="/" search={parseCatalogSearch({ category })} hash="catalogo">{category}</Link>)}</div>
-                <div><h3>Redes sociais</h3><p className="social-list" aria-label="Redes sociais sem integração nesta demonstração">{socialMarks.map((mark, index) => <span key={index} aria-hidden="true"><svg viewBox="0 0 24 24" fill="currentColor">{mark}</svg></span>)}</p><h3 className="wallets-heading">Carteiras compatíveis</h3><p className="wallet-brands">METAMASK · WALLETCONNECT · COINBASE</p></div>
+                <div><h3>Redes sociais</h3><p role="group" className="social-list" aria-label="Redes sociais sem integração nesta demonstração">{socialMarks.map((mark, index) => <span key={index} aria-hidden="true"><svg viewBox="0 0 24 24" fill="currentColor">{mark}</svg></span>)}</p><h3 className="wallets-heading">Carteiras compatíveis</h3><p className="wallet-brands">METAMASK · WALLETCONNECT · COINBASE</p></div>
             </div>
             <p className="copyright">© 2026 Kurio. Propriedade digital para todos.</p>
         </footer>

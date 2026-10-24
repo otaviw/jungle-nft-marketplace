@@ -14,7 +14,7 @@ function storageKey(userId: string) {
     return `kurio:favorites:${userId}`
 }
 
-function readFavorites(userId: string): Favorites {
+export function readFavorites(userId: string): Favorites {
     const stored = localStorage.getItem(storageKey(userId))
 
     return stored ? JSON.parse(stored) as Favorites : { nftIds: [] }

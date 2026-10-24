@@ -1,0 +1,430 @@
+{
+  "url": "http://127.0.0.1:4175/?view=all&q=&page=1&sort=recent",
+  "title": "Kurio — Marketplace de NFTs",
+  "lang": "pt-BR",
+  "headings": [
+    "Seja dono do futuro da arte digitalSeja dono da cultura digital"
+  ],
+  "errors": [],
+  "catalogCards": 9,
+  "relatedCards": 0,
+  "images": [
+    {
+      "src": "http://127.0.0.1:4175/images/nfts/emerald-ape.png",
+      "alt": "Obra em destaque: emerald ape",
+      "complete": true,
+      "width": 450,
+      "height": 450
+    },
+    {
+      "src": "http://127.0.0.1:4175/images/nfts/sage-nomad.png",
+      "alt": "",
+      "complete": true,
+      "width": 250,
+      "height": 250
+    },
+    {
+      "src": "http://127.0.0.1:4175/images/nfts/emerald-ape.png",
+      "alt": "Emerald Ape #001",
+      "complete": true,
+      "width": 450,
+      "height": 450
+    },
+    {
+      "src": "http://127.0.0.1:4175/images/nfts/sage-nomad.png",
+      "alt": "Sage Nomad #002",
+      "complete": true,
+      "width": 250,
+      "height": 250
+    },
+    {
+      "src": "http://127.0.0.1:4175/images/nfts/neon-vessel.png",
+      "alt": "Neon Vessel #003",
+      "complete": true,
+      "width": 250,
+      "height": 250
+    },
+    {
+      "src": "http://127.0.0.1:4175/images/nfts/golden-beat.png",
+      "alt": "Golden Beat #004",
+      "complete": true,
+      "width": 250,
+      "height": 250
+    },
+    {
+      "src": "http://127.0.0.1:4175/images/nfts/emerald-ape.png",
+      "alt": "Emerald Ape #005",
+      "complete": true,
+      "width": 450,
+      "height": 450
+    },
+    {
+      "src": "http://127.0.0.1:4175/images/nfts/sage-nomad.png",
+      "alt": "Sage Nomad #006",
+      "complete": true,
+      "width": 250,
+      "height": 250
+    },
+    {
+      "src": "http://127.0.0.1:4175/images/nfts/neon-vessel.png",
+      "alt": "Neon Vessel #007",
+      "complete": true,
+      "width": 250,
+      "height": 250
+    },
+    {
+      "src": "http://127.0.0.1:4175/images/nfts/golden-beat.png",
+      "alt": "Golden Beat #008",
+      "complete": true,
+      "width": 250,
+      "height": 250
+    },
+    {
+      "src": "http://127.0.0.1:4175/images/nfts/emerald-ape.png",
+      "alt": "Emerald Ape #009",
+      "complete": true,
+      "width": 450,
+      "height": 450
+    },
+    {
+      "src": "http://127.0.0.1:4175/images/nfts/emerald-ape.png",
+      "alt": "",
+      "complete": true,
+      "width": 450,
+      "height": 450
+    },
+    {
+      "src": "http://127.0.0.1:4175/images/nfts/neon-vessel.png",
+      "alt": "",
+      "complete": true,
+      "width": 250,
+      "height": 250
+    },
+    {
+      "src": "http://127.0.0.1:4175/images/nfts/neon-vessel.png",
+      "alt": "",
+      "complete": true,
+      "width": 250,
+      "height": 250
+    },
+    {
+      "src": "http://127.0.0.1:4175/images/nfts/emerald-ape.png",
+      "alt": "",
+      "complete": true,
+      "width": 450,
+      "height": 450
+    },
+    {
+      "src": "http://127.0.0.1:4175/images/nfts/sage-nomad.png",
+      "alt": "",
+      "complete": true,
+      "width": 250,
+      "height": 250
+    },
+    {
+      "src": "http://127.0.0.1:4175/images/nfts/golden-beat.png",
+      "alt": "",
+      "complete": true,
+      "width": 250,
+      "height": 250
+    }
+  ],
+  "fonts": [
+    {
+      "family": "Geist Variable",
+      "status": "unloaded"
+    },
+    {
+      "family": "Geist Variable",
+      "status": "unloaded"
+    },
+    {
+      "family": "Geist Variable",
+      "status": "unloaded"
+    },
+    {
+      "family": "Geist Variable",
+      "status": "unloaded"
+    },
+    {
+      "family": "Geist Variable",
+      "status": "unloaded"
+    }
+  ],
+  "bodyFont": "Consolas, \"Liberation Mono\", \"Courier New\", monospace",
+  "fontResources": [],
+  "serviceWorker": "http://127.0.0.1:4175/mockServiceWorker.js",
+  "scenarioKeys": [],
+  "catalog": {
+    "status": 200,
+    "body": {
+      "items": [
+        {
+          "id": "nft-001",
+          "name": "Emerald Ape #001",
+          "image": "/images/nfts/emerald-ape.png",
+          "price": "1.19",
+          "category": "Arte digital",
+          "network": "Ethereum",
+          "editions": [
+            {
+              "id": "standard",
+              "name": "Edição padrão",
+              "price": "1.19",
+              "available": 5
+            },
+            {
+              "id": "limited",
+              "name": "Edição limitada",
+              "price": "2.49",
+              "available": 0
+            }
+          ],
+          "listedAt": 1792800000000,
+          "popularity": 19,
+          "version": 1
+        },
+        {
+          "id": "nft-002",
+          "name": "Sage Nomad #002",
+          "image": "/images/nfts/sage-nomad.png",
+          "price": "1.69",
+          "category": "Colecionáveis",
+          "network": "Polygon",
+          "editions": [
+            {
+              "id": "standard",
+              "name": "Edição padrão",
+              "price": "1.69",
+              "available": 5
+            },
+            {
+              "id": "limited",
+              "name": "Edição limitada",
+              "price": "2.49",
+              "available": 2
+            }
+          ],
+          "listedAt": 1792713600000,
+          "popularity": 56,
+          "version": 1
+        },
+        {
+          "id": "nft-003",
+          "name": "Neon Vessel #003",
+          "image": "/images/nfts/neon-vessel.png",
+          "price": "1.99",
+          "category": "Arte 3D",
+          "network": "Solana",
+          "editions": [
+            {
+              "id": "standard",
+              "name": "Edição padrão",
+              "price": "1.99",
+              "available": 5
+            },
+            {
+              "id": "limited",
+              "name": "Edição limitada",
+              "price": "2.49",
+              "available": 2
+            }
+          ],
+          "listedAt": 1792627200000,
+          "popularity": 93,
+          "version": 1
+        },
+        {
+          "id": "nft-004",
+          "name": "Golden Beat #004",
+          "image": "/images/nfts/golden-beat.png",
+          "price": "0.99",
+          "category": "Arte digital",
+          "network": "Ethereum",
+          "editions": [
+            {
+              "id": "standard",
+              "name": "Edição padrão",
+              "price": "0.99",
+              "available": 5
+            },
+            {
+              "id": "limited",
+              "name": "Edição limitada",
+              "price": "2.49",
+              "available": 0
+            }
+          ],
+          "listedAt": 1792540800000,
+          "popularity": 30,
+          "version": 1
+        },
+        {
+          "id": "nft-005",
+          "name": "Emerald Ape #005",
+          "image": "/images/nfts/emerald-ape.png",
+          "price": "1.19",
+          "category": "Colecionáveis",
+          "network": "Polygon",
+          "editions": [
+            {
+              "id": "standard",
+              "name": "Edição padrão",
+              "price": "1.19",
+              "available": 5
+            },
+            {
+              "id": "limited",
+              "name": "Edição limitada",
+              "price": "2.49",
+              "available": 2
+            }
+          ],
+          "listedAt": 1792454400000,
+          "popularity": 67,
+          "version": 1
+        },
+        {
+          "id": "nft-006",
+          "name": "Sage Nomad #006",
+          "image": "/images/nfts/sage-nomad.png",
+          "price": "1.69",
+          "category": "Arte 3D",
+          "network": "Solana",
+          "editions": [
+            {
+              "id": "standard",
+              "name": "Edição padrão",
+              "price": "1.69",
+              "available": 5
+            },
+            {
+              "id": "limited",
+              "name": "Edição limitada",
+              "price": "2.49",
+              "available": 2
+            }
+          ],
+          "listedAt": 1792368000000,
+          "popularity": 4,
+          "version": 1
+        },
+        {
+          "id": "nft-007",
+          "name": "Neon Vessel #007",
+          "image": "/images/nfts/neon-vessel.png",
+          "price": "1.99",
+          "category": "Arte digital",
+          "network": "Ethereum",
+          "editions": [
+            {
+              "id": "standard",
+              "name": "Edição padrão",
+              "price": "1.99",
+              "available": 5
+            },
+            {
+              "id": "limited",
+              "name": "Edição limitada",
+              "price": "2.49",
+              "available": 0
+            }
+          ],
+          "listedAt": 1792281600000,
+          "popularity": 41,
+          "version": 1
+        },
+        {
+          "id": "nft-008",
+          "name": "Golden Beat #008",
+          "image": "/images/nfts/golden-beat.png",
+          "price": "0.99",
+          "category": "Colecionáveis",
+          "network": "Polygon",
+          "editions": [
+            {
+              "id": "standard",
+              "name": "Edição padrão",
+              "price": "0.99",
+              "available": 5
+            },
+            {
+              "id": "limited",
+              "name": "Edição limitada",
+              "price": "2.49",
+              "available": 2
+            }
+          ],
+          "listedAt": 1792195200000,
+          "popularity": 78,
+          "version": 1
+        },
+        {
+          "id": "nft-009",
+          "name": "Emerald Ape #009",
+          "image": "/images/nfts/emerald-ape.png",
+          "price": "1.19",
+          "category": "Arte 3D",
+          "network": "Solana",
+          "editions": [
+            {
+              "id": "standard",
+              "name": "Edição padrão",
+              "price": "1.19",
+              "available": 5
+            },
+            {
+              "id": "limited",
+              "name": "Edição limitada",
+              "price": "2.49",
+              "available": 2
+            }
+          ],
+          "listedAt": 1792108800000,
+          "popularity": 15,
+          "version": 1
+        }
+      ],
+      "total": 24,
+      "page": 1,
+      "pageSize": 9
+    }
+  },
+  "detail": {
+    "status": 200,
+    "body": {
+      "id": "nft-001",
+      "name": "Emerald Ape #001",
+      "image": "/images/nfts/emerald-ape.png",
+      "price": "1.19",
+      "category": "Arte digital",
+      "network": "Ethereum",
+      "editions": [
+        {
+          "id": "standard",
+          "name": "Edição padrão",
+          "price": "1.19",
+          "available": 5
+        },
+        {
+          "id": "limited",
+          "name": "Edição limitada",
+          "price": "2.49",
+          "available": 0
+        }
+      ],
+      "listedAt": 1792800000000,
+      "popularity": 19,
+      "version": 1
+    }
+  },
+  "renderedFonts": [
+    {
+      "familyName": "Consolas",
+      "postScriptName": "Consolas-Bold",
+      "isCustomFont": false,
+      "glyphCount": 28
+    }
+  ],
+  "measuredResourceErrors": []
+}

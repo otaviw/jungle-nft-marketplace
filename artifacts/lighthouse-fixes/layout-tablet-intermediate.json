@@ -1,0 +1,45 @@
+{
+  "before": {
+    "x": 96,
+    "y": 130,
+    "width": 276,
+    "height": 276
+  },
+  "after": {
+    "x": 96,
+    "y": 130,
+    "width": 276,
+    "height": 276
+  },
+  "shifts": [
+    {
+      "time": 1401.8999999985099,
+      "value": 0.11996445497630331,
+      "sources": [
+        {
+          "node": "<footer class=\"marketplace-footer market-container\"><div class=\"footer-benefits\" id=\"criadores\"><div class=\"footer-benefit\"><span class=\"benefit-icon\" aria-hidden=\"true\">W</span><h3>Segurança da carteira</h3><p>Proteja sua carteira e colecione arte digital verificada com confiança.</p></div><div cla",
+          "previous": {
+            "x": 24,
+            "y": 736,
+            "width": 720,
+            "height": 108,
+            "top": 736,
+            "right": 744,
+            "bottom": 844,
+            "left": 24
+          },
+          "current": {
+            "x": 0,
+            "y": 0,
+            "width": 0,
+            "height": 0,
+            "top": 0,
+            "right": 0,
+            "bottom": 0,
+            "left": 0
+          }
+        }
+      ]
+    }
+  ]
+}

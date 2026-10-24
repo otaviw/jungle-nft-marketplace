@@ -1,32 +1,97 @@
-import { useState } from 'react'
-import { Link, useNavigate, useSearch } from '@tanstack/react-router'
-import { Search, ShoppingCart, LogIn } from 'lucide-react'
+import { useEffect, useState, type MouseEvent } from 'react'
+import { Link, useLocation, useNavigate, useRouter, useSearch } from '@tanstack/react-router'
+import { Search, ShoppingCart } from 'lucide-react'
 import { AccountMenu } from './account-menu'
+import { MobileNavigation } from './mobile-navigation'
 import { parseCatalogSearch } from '@/lib/catalog-search'
 
-export function MarketplaceHeader({ detail = false, onFilters, filtersOpen = false }: { detail?: boolean; onFilters?: () => void; filtersOpen?: boolean }) {
+const sections = [
+    { id: 'inicio', label: 'Início' },
+    { id: 'catalogo', label: 'Mercado' },
+    { id: 'criadores', label: 'Criadores' },
+    { id: 'diario', label: 'Aprenda' },
+] as const
+
+export function MarketplaceHeader({ detail = false, onFilters, filtersOpen = false }: {
+    detail?: boolean
+    onFilters?: () => void
+    filtersOpen?: boolean
+}) {
     const [searchOpen, setSearchOpen] = useState(false)
+    const [activeSection, setActiveSection] = useState('inicio')
+    const pathname = useLocation({ select: location => location.pathname })
     const search = parseCatalogSearch(useSearch({ strict: false }) as Record<string, unknown>)
     const navigate = useNavigate()
+    const router = useRouter()
+
+    useEffect(() => {
+        if (pathname !== '/') return
+        let frame = 0
+        function measure() {
+            const headerHeight = document.querySelector('.marketplace-header')?.getBoundingClientRect().height ?? 70
+            const visible = sections
+                .map(section => ({ id: section.id, top: section.id === 'inicio' ? -window.scrollY : document.getElementById(section.id)?.getBoundingClientRect().top }))
+                .filter(section => section.top !== undefined && section.top <= headerHeight + 40)
+                .sort((a, b) => b.top! - a.top!)
+            setActiveSection(visible[0]?.id ?? 'inicio')
+        }
+        function schedule() {
+            cancelAnimationFrame(frame)
+            frame = requestAnimationFrame(measure)
+        }
+        schedule()
+        window.addEventListener('scroll', schedule, { passive: true })
+        window.addEventListener('resize', schedule)
+        return () => {
+            cancelAnimationFrame(frame)
+            window.removeEventListener('scroll', schedule)
+            window.removeEventListener('resize', schedule)
+        }
+    }, [pathname])
+
+    function goToSection(event: MouseEvent<HTMLAnchorElement>, id: string) {
+        if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return
+        event.preventDefault()
+        void navigate({
+            to: '/',
+            search: pathname === '/' ? search : parseCatalogSearch({}),
+            hash: id === 'inicio' ? '' : id,
+            resetScroll: false,
+        }).then(() => {
+            requestAnimationFrame(() => {
+                const headerHeight = document.querySelector('.marketplace-header')?.getBoundingClientRect().height ?? 70
+                const target = document.getElementById(id)
+                const top = id === 'inicio' ? 0 : target ? window.scrollY + target.getBoundingClientRect().top - headerHeight - 16 : 0
+                window.scrollTo({ top: Math.max(0, top), behavior: 'instant' })
+                setActiveSection(id)
+            })
+        })
+    }
+
     return (
         <header className={`marketplace-header market-container ${detail ? 'marketplace-header-detail' : ''}`}>
             <div className="desktop-header">
-                <Link to="/" search={parseCatalogSearch({})} className="brand">KURIO</Link>
-                <nav aria-label="Navegação principal" className="desktop-links">
-                    <Link to="/" search={parseCatalogSearch({})} activeProps={{ className: '' }} className={!detail ? 'active' : ''}>Início</Link>
-                    <Link to="/" search={parseCatalogSearch({})} hash="catalogo" activeProps={{ className: '' }} className={detail ? 'active' : ''}>Mercado</Link>
-                    <Link to="/" search={parseCatalogSearch({})} hash="criadores" activeProps={{ className: '' }}>Criadores</Link>
-                    <Link to="/" search={parseCatalogSearch({})} hash="diario" activeProps={{ className: '' }}>Aprenda</Link>
+                <Link to="/" search={parseCatalogSearch({})} className="brand" onClick={event => goToSection(event, 'inicio')}>KURIO</Link>
+                <div className="min-[1200px]:hidden"><MobileNavigation compact /></div>
+                <nav aria-label="Navegação principal" className="desktop-links max-[1199px]:hidden!">
+                    {sections.map(section => {
+                        const active = pathname === '/' ? activeSection === section.id : detail && section.id === 'catalogo'
+                        const href = router.buildLocation({ to: '/', search: pathname === '/' ? search : parseCatalogSearch({}), hash: section.id === 'inicio' ? '' : section.id }).href
+                        return <a key={section.id} href={href} aria-current={active ? 'location' : undefined} className={active ? 'active' : ''} onClick={event => goToSection(event, section.id)}>{section.label}</a>
+                    })}
                 </nav>
                 <div className="desktop-actions">
-                    <button type="button" className="icon-control" aria-label="Abrir busca" aria-expanded={searchOpen} onClick={() => setSearchOpen(!searchOpen)}><Search /></button>
-                    <Link to="/cart" aria-label="Abrir carrinho" className="icon-control"><ShoppingCart /></Link>
-                    <span className="login-icon" aria-hidden="true"><LogIn size={17} /></span>
+                    <button type="button" className="icon-control" aria-label="Abrir busca" aria-expanded={searchOpen} onClick={() => {
+                        setSearchOpen(value => !value)
+                        if (!searchOpen) requestAnimationFrame(() => document.getElementById('header-search')?.focus())
+                    }}><Search aria-hidden="true" /></button>
+                    <Link to="/cart" aria-label="Abrir carrinho" className="icon-control"><ShoppingCart aria-hidden="true" /></Link>
                     <AccountMenu />
                 </div>
             </div>
             {(searchOpen || !detail) && (
                 <div className={`header-search ${searchOpen ? 'search-expanded' : ''}`}>
+                    <div className="shrink-0 md:hidden"><MobileNavigation compact /></div>
                     <form role="search" onSubmit={event => {
                         event.preventDefault()
                         const q = String(new FormData(event.currentTarget).get('q') ?? '').trim()

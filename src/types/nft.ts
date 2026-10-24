@@ -13,6 +13,8 @@ export interface Nft {
     category: string
     network: string
     editions: NftEdition[]
+    listedAt: number
+    popularity: number
     version: number
 }
 
@@ -21,4 +23,10 @@ export interface NftListResponse {
     total: number
     page: number
     pageSize: number
+}
+
+export interface CatalogFacets {
+    categories: Record<string, number>
+    networks: Record<string, number>
+    maxPrice: string
 }

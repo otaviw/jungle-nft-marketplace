@@ -1,0 +1,74 @@
+{
+  "before": {
+    "x": 24,
+    "y": 48,
+    "width": 342,
+    "height": 342
+  },
+  "after": {
+    "x": 28,
+    "y": 66,
+    "width": 338,
+    "height": 338
+  },
+  "shifts": [
+    {
+      "time": 1648.300000000745,
+      "value": 1,
+      "sources": [
+        {
+          "node": "<body>\n  <div id=\"root\"><div class=\"marketplace nft-page\"><header class=\"marketplace-header market-container marketplace-header-detail\"><div class=\"desktop-header\"><a class=\"brand\" href=\"/?view=all&amp;q=&amp;page=1&amp;sort=recent\">KURIO</a><nav aria-label=\"Navegação principal\" class=\"desktop-links",
+          "previous": {
+            "x": 0,
+            "y": 24,
+            "width": 390,
+            "height": 820,
+            "top": 24,
+            "right": 390,
+            "bottom": 844,
+            "left": 0
+          },
+          "current": {
+            "x": 0,
+            "y": 0,
+            "width": 390,
+            "height": 844,
+            "top": 0,
+            "right": 390,
+            "bottom": 844,
+            "left": 0
+          }
+        }
+      ]
+    },
+    {
+      "time": 1690,
+      "value": 0.0007025463242929439,
+      "sources": [
+        {
+          "node": "<div class=\"detail-tabs\" role=\"tablist\" aria-label=\"Informações do NFT\"><button id=\"nft-details-tab\" type=\"button\" role=\"tab\" tabindex=\"0\" aria-selected=\"true\" aria-controls=\"nft-description-panel\">Detalhes do NFT</button><button id=\"nft-reviews-tab\" type=\"button\" role=\"tab\" tabindex=\"-1\" aria-selec",
+          "previous": {
+            "x": 24,
+            "y": 820.578125,
+            "width": 342,
+            "height": 23.421875,
+            "top": 820.578125,
+            "right": 366,
+            "bottom": 844,
+            "left": 24
+          },
+          "current": {
+            "x": 0,
+            "y": 0,
+            "width": 0,
+            "height": 0,
+            "top": 0,
+            "right": 0,
+            "bottom": 0,
+            "left": 0
+          }
+        }
+      ]
+    }
+  ]
+}

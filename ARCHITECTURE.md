@@ -4,7 +4,7 @@
 
 A aplicação é uma SPA React com TypeScript e Vite. Telas ficam em `src/pages`, componentes em `src/components` e os componentes de UI em `src/components/ui`, com Tailwind e shadcn/ui. `src/router.tsx` declara as rotas com TanStack Router. TanStack Query mantém estado remoto; as chamadas REST passam pelo Axios de `src/lib/api.ts`, com base `/api` e timeout de 10 segundos.
 
-`src/types` define contratos de transporte. Zod valida formulários, parâmetros e eventos em pontos específicos; nem toda resposta Axios tem validação de runtime. Handlers e stores em `src/mocks` simulam a API e persistem os dados no navegador. O bootstrap só importa e inicia essa camada quando `VITE_ENABLE_MOCKS === 'true'`, inclusive no build de demonstração. As páginas não retornam fixtures como alternativa à API.
+`src/types` define contratos de transporte. Zod valida formulários, parâmetros e eventos em pontos específicos; nem toda resposta Axios tem validação de runtime. Handlers e stores em `src/mocks` simulam a API e persistem os dados no navegador. O bootstrap só importa e inicia essa camada quando `VITE_ENABLE_MOCKS === 'true'`, inclusive no build de demonstração. As páginas não retornam fixtures como alternativa à API. O Router usa `lazyRouteComponent` para dividir as páginas, mantendo `beforeLoad`, validação de search e proteção de sessão.
 
 Não há servidor de produção neste repositório. Persistência e autorização dos mocks servem à demonstração e aos testes; os dados podem ser inspecionados e alterados pelo próprio navegador.
 
@@ -12,7 +12,7 @@ Não há servidor de produção neste repositório. Persistência e autorizaçã
 
 Rotas públicas: `/`, `/nfts/$nftId`, `/cart` e `/login`. Cadastro é o modo `register` da rota de login, sem rota separada. Perfil, carteiras, checkout e `/orders/$orderId` usam `beforeLoad` com `requireSession`, preservando o destino para o login. Rotas desconhecidas exibem a página de não encontrado.
 
-Busca, categoria, rede, ordenação e página ficam na URL: `q`, `category`, `network`, `sort`, `page`. Ordenações: `recent`, `price-asc` e `price-desc`. Busca e filtros reiniciam a página. Os handlers aplicam os mesmos parâmetros às 24 fixtures, com nove resultados por página. `recent` mantém a ordem das fixtures, sem campo de data. A edição limitada de cada terceiro NFT, começando pelo primeiro, inicia esgotada.
+Busca, categoria, rede, faixa de preço, visualização, favoritos, ordenação e página ficam na URL: `q`, `category`, `network`, `minPrice`, `maxPrice`, `view`, `favorites`, `sort`, `page`. Ordenações: `recent`, `price-asc` e `price-desc`. Busca e filtros reiniciam a página. Os handlers filtram antes de ordenar/paginar as 24 fixtures, com nove resultados por página. `recent` usa `listedAt`; datas e popularidade são simuladas e determinísticas. Os limites de preço são inclusivos e comparados em wei. A edição limitada de cada terceiro NFT, começando pelo primeiro, inicia esgotada.
 
 ## Contratos REST
 
@@ -24,8 +24,9 @@ Todos os caminhos abaixo têm prefixo `/api`. Corpo e resposta usam JSON, exceto
 | `POST /auth/login` | `{ email, password }` | 200 `Session` |
 | `GET /auth/session` | Token | `Session` |
 | `POST /auth/logout`, `POST /auth/expire` | Token | 204; revoga o token informado |
-| `GET /nfts` | Query `q, category, network, sort, page` | `{ items: Nft[], total, page, pageSize }` |
+| `GET /nfts` | Query `q, category, network, minPrice, maxPrice, view, favorites, sort, page` | `{ items: Nft[], total, page, pageSize }` |
 | `GET /nfts/:id` | Identificador | `Nft` |
+| `GET /nfts/:id/reviews` | Identificador | `{ items, average, total }`; avaliações de demonstração |
 | `GET /favorites` | Token | `{ nftIds: string[] }` |
 | `PUT /favorites/:id`, `DELETE /favorites/:id` | Token e NFT | Favoritos atualizados |
 | `GET /cart` | Token opcional | `CartView` |
@@ -146,7 +147,7 @@ Essa recarga também recria o QueryClient e os módulos, descartando catálogo e
 
 Os inputs de perfil usam `aria-labelledby` no span com apenas o título e `aria-describedby` no span de erro. O asterisco é `aria-hidden`, e `required` indica obrigatoriedade. Assim, a validação não muda o nome acessível. Esses vínculos foram preservados na revisão visual.
 
-Há feedback com `role="status"` e `role="alert"`, estados de carregamento e shimmer com respeito a movimento reduzido. Isso não constitui auditoria completa de acessibilidade. O HTML ainda declara `lang="en"` apesar da interface em português; conferir em revisão de acessibilidade/SEO. A tipografia usa Consolas com fallback Liberation Mono, Courier New e monospace; Geist continua empacotada. É uma aproximação: `font/family` é um token sem família identificada, não um nome de fonte.
+Há feedback com `role="status"` e `role="alert"`, estados de carregamento e shimmer com respeito a movimento reduzido. Isso não constitui auditoria completa de acessibilidade. O HTML declara `lang="pt-BR"`, título Kurio e descrição em português. A tipografia usa Consolas com fallback Liberation Mono, Courier New e monospace; Geist continua empacotada. É uma aproximação: `font/family` é um token sem família identificada, não um nome de fonte.
 
 ## Composição de home e detalhe
 
@@ -154,15 +155,15 @@ Há feedback com `role="status"` e `role="alert"`, estados de carregamento e shi
 
 A busca saiu do corpo do catálogo para o header: o formulário navega pelo Router, preserva filtros e reinicia a página. No desktop, o ícone abre a busca; no mobile ela já fica visível. Os filtros de coleção/rede permanecem no formulário associado à ordenação. Em mobile, o botão de filtros expande a lateral no fluxo e move o foco para a coleção, sem criar um modal sem controle de foco. Pills de edição são rádios nativos com nomes acessíveis estáveis; quantidade continua validada pelo mesmo estado, e os botões de incremento respeitam o estoque. As mutations de favoritos e carrinho permanecem nos hooks anteriores.
 
-`NftGallery` mantém apenas a seleção visual do recorte. Todos os recortes usam a imagem original fornecida e são identificados como vistas da mesma obra. A ampliação usa `dialog` nativo para foco, Escape e retorno ao acionador. As miniaturas aparecem ao lado da imagem no desktop e dentro do diálogo no mobile; a escolha atualiza a visualização e persiste ao fechar. O diálogo informa a ausência de fotografias alternativas nos assets. A consulta de itens relacionados usa Query/Axios com a categoria atual; respostas e eventos continuam na camada de dados existente. Os textos não afirmam ratings, propriedade blockchain ou atributos que a API não fornece.
+`NftGallery` mantém apenas a seleção visual do recorte. Todos os recortes usam a imagem original fornecida e são identificados como vistas da mesma obra. A ampliação usa `dialog` nativo para foco, Escape e retorno ao acionador. As miniaturas aparecem ao lado da imagem no desktop e dentro do diálogo no mobile; a escolha atualiza a visualização e persiste ao fechar. O diálogo informa a ausência de fotografias alternativas nos assets. Relacionados são consultados por Query/Axios com a categoria atual e exibidos em carrossel de 2/3/5 cards por página, com scroll, pontinhos, teclado e resize. Avaliações vêm do endpoint MSW de reviews: selo, resumo e aba compartilham o cache; média e total são derivados dos comentários fictícios. O NFT principal tem 19 avaliações e média 4,8. Não há publicação de comentários nem propriedade blockchain real.
 
 As abas de informações usam foco gerenciado e navegação por setas, Home e End. O CTA inclui “Comprar NFT” no nome acessível e explicita a adição ao carrinho; “Favoritar” mantém o nome da variante textual e comunica o estado com `aria-pressed`.
 
-As seções editoriais e a newsletter reproduzem a hierarquia visual sem fingir serviços de publicação ou inscrição. Links de perfil, carteiras, catálogo e cards usam rotas reais; destinos editoriais não implementados não são links de sucesso. Os três destaques do hero alternam entre assets existentes e apontam para filtros reais.
+As seções editoriais e a newsletter reproduzem a hierarquia visual sem fingir serviços de publicação ou inscrição. Links de perfil, carteiras, catálogo e cards usam rotas reais; destinos editoriais não implementados não são links de sucesso. Os três destaques do hero alternam automaticamente entre assets existentes e apontam para filtros reais. Pontinhos mantêm troca manual; pausa/retomada aparece somente ao foco de teclado, sem ocupar uma linha. Movimento reduzido desativa o autoavanço.
 
 O script `scripts/visual-review.mjs` captura home e detalhe em 390, 768 e 1440 px por padrão. `VISUAL_REVIEW_WIDTHS` permite incluir 414 px, a largura das referências mobile; `VISUAL_REVIEW_OUTPUT` separa revisões. O JSON registra medidas dos blocos, carregamento de cada imagem e largura do documento. `scripts/compare-visual.ps1` monta pares de referência/implementação na mesma escala, com recortes separados por seção. A fidelidade é avaliada pela inspeção desses pares, separadamente no desktop e mobile. Carregamento e ausência de overflow não demonstram fidelidade. Não há `overflow-x: hidden` no documento para mascarar cortes. O recorte da galeria é local à imagem; textos auxiliares para leitores de tela usam a técnica `sr-only`, incluindo a disponibilidade associada ao input de quantidade. Os artefatos são de revisão e não baselines de regressão.
 
-Limitações visuais documentadas no README: fonte aproximada, três categorias, duas edições, dados diferentes dos exemplos do Figma, rankings/datas e filtro por intervalo de preço ausentes no contrato atual. Não foram criadas métricas ou integrações para preencher essas diferenças.
+Limitações visuais documentadas no README: fonte aproximada, categorias e edições das fixtures e dados diferentes dos exemplos do Figma. Datas e popularidade são simuladas; a API aceita intervalo de preços inclusivo em wei. Não há integrações blockchain reais.
 
 ### Apresentação da compra
 
@@ -174,4 +175,31 @@ O checkout consulta perfil, carteiras, conexão e carrinho nos endpoints existen
 
 O recibo exibe `collector` e `snapshot` do próprio pedido nos três estados. Apenas a confirmação exibe o ID de transação; pendência e recusa não afirmam transferência de ativos. As consultas, controle de versões, limpeza da tentativa terminal, polling e reconciliação Socket.IO/REST foram preservados. Nenhuma regra de estoque, taxa, idempotência ou recuperação foi alterada.
 
-O [README](README.md) registra os controles reais dos cenários, reset integral com recarga, assets presentes e pendências de deploy, Lighthouse, screenshots e cobertura. Não há configuração de auditoria Lighthouse ou baselines visuais. A configuração Vercel está preparada; a execução em hospedagem pública permanece pendente.
+O [README](README.md) registra controles dos cenários, reset, comandos, credenciais e a URL pública informada, [kurio-nft-pied.vercel.app](https://kurio-nft-pied.vercel.app/). Não houve novo deploy nem validação desse domínio nesta etapa. As credenciais iniciais conferidas no seed são `demo@kurio.test` e `outro@kurio.test`, ambas com `Kurio123!`; mocks requerem `VITE_ENABLE_MOCKS=true` no build.
+
+Há configuração reproduzível em `scripts/lighthouse.config.mjs` e execução em `scripts/lighthouse.mjs`. As medianas finais foram: Home mobile 83/100/100/92, detalhe mobile 87/100/100/92 e ambas desktop 99/100/100/92, na ordem Performance/Accessibility/Best Practices/SEO. **Performance mobile permanece abaixo da meta 90.** [Resumo e métricas](artifacts/lighthouse/2026-10-24T20-18-35.247Z/summary.md), [JSON](artifacts/lighthouse/2026-10-24T20-18-35.247Z/summary.json) e [anexo com os 12 pares HTML/JSON e configuração](artifacts/kurio-lighthouse-final.zip) usam caminhos relativos. Os arquivos existem no working tree/anexo; ainda precisam ser incluídos na entrega remota, pois não houve commit/push. O snapshot auditado é anterior à correção atual do header e não foi reauditado.
+
+Não foram encontrados baselines automatizados em `e2e/` nem asserções `toHaveScreenshot`/`toMatchSnapshot` na suíte. As pastas `artifacts/visual-review/current`, `comparison-after`, `commerce-current` e correlatas contêm revisão manual, ignorada pelo Git, não baselines automatizadas. Testes funcionais continuam existentes. A conferência atual foi restrita ao header; não executou Lighthouse nem suíte completa. A recusa de testes na tentativa anterior está no histórico; a conferência atual foi autorizada e executada.
+
+## Ajustes de navegação e descoberta
+
+O header usa navegação do Router e rolagem explícita para aceitar cliques repetidos
+na mesma seção. O destaque visual/acessível acompanha a posição das seções; o
+listener de scroll é passivo, agrupa medições com requestAnimationFrame e é removido
+no unmount. A navegação entre seções preserva os filtros da home.
+
+O layout desktop de 1440 px permanece. Abaixo de 1200 px, os links desktop são substituídos pelo acionador compacto do `MobileNavigation` existente, sem recortar os últimos itens. O mesmo diálogo nativo oferece Início, Mercado, Criadores, Aprenda, carrinho e conta; Escape e retorno de foco são nativos. Busca e ações existentes permanecem. A implementação acrescenta classes Tailwind nos dois componentes, sem dependências ou alteração de CSS global. Foram conferidos visualmente 390/768/1024/1440 px e a transição 1199/1200 px, além de teclado, busca, conta/carrinho e overflow; não se trata de auditoria geral das páginas.
+
+O contrato da listagem acrescenta `view` (all/new/trending) e `favorites=true`.
+A API calcula a janela de novos lançamentos a partir da data máxima das fixtures,
+sem depender da data de execução. Popularidade é fictícia e determinística.
+Filtros são aplicados antes da ordenação/paginação. Favoritos exigem sessão válida;
+chaves de cache incluem a identidade do usuário e são limpas com as demais consultas
+privadas. A rota de login aceita apenas o destino exato adicional
+`/?favorites=true#catalogo`, mantendo a restrição de redirecionamentos internos.
+
+Coleção/rede passaram de listboxes nativos para grupos de rádios; os testes de
+comportamento foram adaptados aos novos controles, mantendo verificação de URL,
+resultados, paginação e histórico. A ordenação usa o Select existente do shadcn,
+sem adicionar dependências. Os recortes da galeria e os fluxos de compra permanecem
+inalterados.
