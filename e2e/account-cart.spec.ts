@@ -23,7 +23,16 @@ test('preserva o carrinho do visitante após refresh e login', async ({
         page.getByRole('heading', { name: 'Emerald Ape #001', exact: true }),
     ).toBeVisible()
 
+    const mobile = page.viewportSize()!.width < 768
+    if (mobile) {
+        await page.getByRole('link', { name: 'Voltar ao catálogo', exact: true }).click()
+        await page.getByRole('button', { name: 'Abrir conta', exact: true }).click()
+    }
     await page.getByRole('button', { name: 'Sair', exact: true }).click()
+    if (mobile) {
+        await expect(page.getByRole('button', { name: 'Sair', exact: true })).toHaveCount(0)
+        await page.goto('/cart')
+    }
 
     await expect(page.getByText(
         'Seu carrinho está vazio. Explore o catálogo para adicionar NFTs.',

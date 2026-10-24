@@ -164,4 +164,14 @@ O script `scripts/visual-review.mjs` captura home e detalhe em 390, 768 e 1440 p
 
 Limitações visuais documentadas no README: fonte aproximada, três categorias, duas edições, dados diferentes dos exemplos do Figma, rankings/datas e filtro por intervalo de preço ausentes no contrato atual. Não foram criadas métricas ou integrações para preencher essas diferenças.
 
+### Apresentação da compra
+
+`CommerceLayout` reutiliza `MarketplaceHeader` e `MarketplaceFooter` nas rotas de carrinho, checkout e pedido, com breadcrumb desktop e retorno/título mobile. Os estilos novos ficam em `commerce.css`; os seletores não reorganizam home, detalhe ou conta. `PurchaseLines` e `CartTotals` recebem `CartView`/linhas prontas da API e não calculam preços no componente. `CartSuggestions` consulta o catálogo por Query/Axios e exclui os IDs do carrinho; não afirma possuir histórico de visualizações de outros usuários.
+
+O checkout consulta perfil, carteiras, conexão e carrinho nos endpoints existentes. `readDraft` dá prioridade aos valores já salvos; na ausência deles, usa `Profile.displayName`/`email`, com os dados da sessão como fallback explícito em erro de perfil. O usuário é avisado desse erro e pode refazer a consulta. Rede, endereço, apelido, nome do perfil, provedor, indicação e ENS são exibidos em inputs somente de leitura da carteira selecionada. O outro endereço cadastrado é informativo e identificado como “Outra carteira”. Nenhum desses campos foi adicionado ao coletor do pedido: a carteira completa já integra a cotação e seu snapshot.
+
+`useMobile` observa apenas o breakpoint de apresentação de 767 px via `matchMedia`/`useSyncExternalStore`. Isso permite usar a ordem correta de elementos no DOM em cada composição, sem valores positivos de `tabindex`. A lógica de draft, conexão, revisão e tentativa fica no mesmo `CheckoutForm`, fora dessa escolha de apresentação. Na validação nativa, um campo inválido reabre o grupo mobile e recebe foco. O botão de confirmação continua condicionado à cotação atual, e mudanças do draft/conexão/eventos invalidam a revisão como antes.
+
+O recibo exibe `collector` e `snapshot` do próprio pedido nos três estados. Apenas a confirmação exibe o ID de transação; pendência e recusa não afirmam transferência de ativos. As consultas, controle de versões, limpeza da tentativa terminal, polling e reconciliação Socket.IO/REST foram preservados. Nenhuma regra de estoque, taxa, idempotência ou recuperação foi alterada.
+
 O [README](README.md) registra os controles reais dos cenários, reset integral com recarga, assets presentes e pendências de deploy, Lighthouse, screenshots e cobertura. Não há configuração de auditoria Lighthouse ou baselines visuais. A configuração Vercel está preparada; a execução em hospedagem pública permanece pendente.

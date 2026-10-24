@@ -1,9 +1,10 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, type FormEvent } from 'react'
 import axios from 'axios'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Link, useNavigate } from '@tanstack/react-router'
-import { Header } from '@/components/layout/header'
+import { CommerceLayout } from '@/components/layout/commerce-layout'
 import { QuoteSummary } from '@/components/checkout/quote-summary'
+import { CartTotals, PurchaseLines } from '@/components/checkout/purchase-summary'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { api } from '@/lib/api'
@@ -15,8 +16,11 @@ import {
 import type { User } from '@/types/auth'
 import type { OrderInput } from '@/types/order'
 import type { Quote } from '@/types/quote'
-import type { Wallet } from '@/lib/wallet-schema'
+import { walletProviders, type Wallet } from '@/lib/wallet-schema'
 import type { WalletConnection } from '@/types/wallet-connection'
+import type { Profile } from '@/types/profile'
+import type { CartView } from '@/types/cart'
+import { useMobile } from '@/hooks/use-mobile'
 
 interface Draft {
     name: string
@@ -29,7 +33,7 @@ function draftKey(userId: string) {
     return `kurio:checkout-draft:${userId}`
 }
 
-function readDraft(user: User): Draft {
+function readDraft(user: User, profile?: Profile): Draft {
     try {
         const stored = sessionStorage.getItem(draftKey(user.id))
         const parsed: unknown = stored ? JSON.parse(stored) : null
@@ -38,8 +42,8 @@ function readDraft(user: User): Draft {
             const value = parsed as Partial<Draft>
 
             return {
-                name: typeof value.name === 'string' ? value.name : user.name,
-                email: typeof value.email === 'string' ? value.email : user.email,
+                name: typeof value.name === 'string' ? value.name : profile?.displayName ?? user.name,
+                email: typeof value.email === 'string' ? value.email : profile?.email ?? user.email,
                 notes: typeof value.notes === 'string' ? value.notes : '',
                 walletId: typeof value.walletId === 'string' ? value.walletId : '',
             }
@@ -49,8 +53,8 @@ function readDraft(user: User): Draft {
     }
 
     return {
-        name: user.name,
-        email: user.email,
+        name: profile?.displayName ?? user.name,
+        email: profile?.email ?? user.email,
         notes: '',
         walletId: '',
     }
@@ -69,27 +73,17 @@ function errorMessage(error: unknown) {
 
 export function CheckoutPage() {
     const session = useQuery(sessionOptions)
+    const profile = useQuery({ queryKey: ['profile', session.data?.user.id], enabled: Boolean(session.data), queryFn: async ({ signal }) => (await api.get<Profile>('/profile', { signal })).data })
 
     return (
-        <>
-            <Header />
-
-            <main className="mx-auto max-w-6xl px-5 py-8 md:px-8 md:py-12">
-                <Link to="/cart" className="text-sm text-muted-foreground underline">
-                    Voltar ao carrinho
-                </Link>
-
-                <h1 className="mt-6 text-2xl font-bold">
-                    Pagamento com carteira
-                </h1>
-
-                {session.data && (
-                    <CheckoutForm key={session.data.user.id} user={session.data.user} />
+        <CommerceLayout title="Pagamento com carteira" step="checkout">
+                {session.data && !profile.isPending && (
+                    <CheckoutForm key={session.data.user.id} user={session.data.user} profile={profile.data} />
                 )}
-
-                {session.isPending && (
-                    <p role="status" className="mt-6">Verificando sessão...</p>
+                {(session.isPending || (session.data && profile.isPending)) && (
+                    <div role="status" className="commerce-loading"><span className="sr-only">Verificando sessão e perfil...</span><div aria-hidden="true" className="catalog-shimmer h-96 rounded-xl" /></div>
                 )}
+                {profile.isError && <div role="alert" className="commerce-feedback"><p>Não foi possível carregar os dados do perfil. Confira o nome e o e-mail antes de continuar.</p><Button onClick={() => void profile.refetch()}>Carregar perfil novamente</Button></div>}
 
                 {session.isError && (
                     <div role="alert" className="mt-6">
@@ -109,17 +103,18 @@ export function CheckoutPage() {
                         Sua sessão expirou. Entre para continuar.
                     </Link>
                 )}
-            </main>
-        </>
+        </CommerceLayout>
     )
 }
 
-function CheckoutForm({ user }: { user: User }) {
+function CheckoutForm({ user, profile }: { user: User; profile?: Profile }) {
+    const mobile = useMobile()
     const queryClient = useQueryClient()
     const navigate = useNavigate()
     const sendingRef = useRef(false)
 
-    const [draft, setDraft] = useState(() => readDraft(user))
+    const [draft, setDraft] = useState(() => readDraft(user, profile))
+    const [profileOpen, setProfileOpen] = useState(false)
     const [savedQuote, setQuote] = useState<Quote | null>(null)
     const [reviewRevision, setReviewRevision] = useState<string | null>(null)
 
@@ -158,6 +153,8 @@ function CheckoutForm({ user }: { user: User }) {
         },
     })
 
+    const cart = useQuery({ queryKey: ['cart', user.id], queryFn: async ({ signal }) => (await api.get<CartView>('/cart', { signal })).data })
+
     const connection = useQuery({
         queryKey: ['wallet-connection', user.id],
         queryFn: async ({ signal }) => {
@@ -171,9 +168,11 @@ function CheckoutForm({ user }: { user: User }) {
         refetchInterval: 30_000,
     })
 
+    const walletId = draft.walletId || connection.data?.walletId || wallets.data?.find(wallet => wallet.slot === 'primary')?.id || wallets.data?.[0]?.id || ''
+    const selectedWallet = wallets.data?.find(wallet => wallet.id === walletId)
     const connected = Boolean(
         connection.data
-        && connection.data.walletId === draft.walletId
+        && connection.data.walletId === walletId
         && connection.data.expiresAt > now,
     )
 
@@ -186,7 +185,7 @@ function CheckoutForm({ user }: { user: User }) {
 
             const response = await api.post<WalletConnection>(
                 '/wallet-connection',
-                { walletId: draft.walletId },
+                { walletId },
             )
 
             return response.data
@@ -200,7 +199,7 @@ function CheckoutForm({ user }: { user: User }) {
     const review = useMutation({
         mutationFn: async () => {
             const response = await api.post<Quote>('/quotes', {
-                walletId: draft.walletId,
+                walletId,
             })
 
             return response.data
@@ -256,7 +255,7 @@ function CheckoutForm({ user }: { user: User }) {
 
     if (hasAttempt) {
         return (
-            <section className="mt-8 rounded-xl bg-card p-6">
+            <section className="commerce-state checkout-recovery">
                 <h2 className="font-bold">Recuperar tentativa anterior</h2>
 
                 <p className="mt-3 text-sm text-muted-foreground">
@@ -283,7 +282,7 @@ function CheckoutForm({ user }: { user: User }) {
 
     if (wallets.isPending || connection.isPending) {
         return (
-            <div role="status" className="mt-8">
+            <div role="status" className="commerce-loading">
                 <span className="sr-only">Carregando pagamento</span>
                 <div
                     aria-hidden="true"
@@ -295,7 +294,7 @@ function CheckoutForm({ user }: { user: User }) {
 
     if (wallets.isError || connection.isError) {
         return (
-            <section role="alert" className="mt-8">
+            <section role="alert" className="commerce-state">
                 <p>Não foi possível carregar as carteiras.</p>
                 <Button
                     className="mt-4"
@@ -312,7 +311,7 @@ function CheckoutForm({ user }: { user: User }) {
 
     if (!wallets.data?.length) {
         return (
-            <section className="mt-8">
+            <section className="commerce-state">
                 <p>Cadastre uma carteira antes de continuar.</p>
                 <Link to="/wallets" className="mt-4 inline-block text-primary underline">
                     Cadastrar carteira
@@ -321,188 +320,94 @@ function CheckoutForm({ user }: { user: User }) {
         )
     }
 
+    if (cart.isPending) return <div role="status" className="commerce-loading"><span className="sr-only">Carregando resumo da compra</span><div aria-hidden="true" className="catalog-shimmer h-72 rounded-xl" /></div>
+    if (cart.isError) return <section role="alert" className="commerce-state"><p>Não foi possível carregar o resumo da compra.</p><Button onClick={() => void cart.refetch()}>Tentar novamente</Button></section>
+    if (!cart.data.items.length) return <section className="commerce-state"><p role="status">Seu carrinho está vazio. Adicione NFTs antes de continuar.</p><Link to="/cart" className="market-cta">Voltar ao carrinho</Link></section>
+
     const busy = purchase.isPending || review.isPending || connect.isPending
+    const previewCart = quote?.cart ?? cart.data
+    const readOnlyFields = [
+        { label: 'Apelido da carteira', value: selectedWallet?.nickname },
+        { label: 'Rede', value: selectedWallet?.network },
+        { label: 'Nome do perfil', value: selectedWallet?.profileName },
+        { label: 'Endereço da carteira', value: selectedWallet?.address },
+        { label: 'Outra carteira (opcional)', value: wallets.data.find(wallet => wallet.id !== walletId)?.address },
+        { label: 'Tipo de carteira', value: selectedWallet?.provider },
+        { label: 'Código de indicação (opcional)', value: selectedWallet?.referralCode },
+        { label: 'Nome ENS', value: selectedWallet?.ens },
+    ]
 
-    return (
-        <div className="mt-8 grid items-start gap-8 lg:grid-cols-[1.5fr_1fr]">
-            <form
-                className="space-y-6"
-                onSubmit={(event) => {
-                    event.preventDefault()
-
-                    if (connected && !busy) {
-                        review.mutate()
-                    }
-                }}
-            >
-                <h2 className="font-bold">Perfil do colecionador</h2>
-
-                <div className="grid gap-5 sm:grid-cols-2">
-                    <label className="text-sm">
-                        Nome de exibição
-                        <Input
-                            value={draft.name}
-                            required
-                            minLength={2}
-                            maxLength={80}
-                            autoComplete="name"
-                            disabled={busy}
-                            className="mt-2"
-                            onChange={(event) => changeDraft({ name: event.target.value })}
-                        />
-                    </label>
-
-                    <label className="text-sm">
-                        E-mail
-                        <Input
-                            value={draft.email}
-                            type="email"
-                            required
-                            autoComplete="email"
-                            disabled={busy}
-                            className="mt-2"
-                            onChange={(event) => changeDraft({ email: event.target.value })}
-                        />
-                    </label>
+    const formProps = {
+        id: 'checkout-review-form',
+        onInvalidCapture: (event: FormEvent<HTMLFormElement>) => {
+            setProfileOpen(true)
+            const field = event.target as HTMLElement
+            requestAnimationFrame(() => field.focus())
+        },
+        onSubmit: (event: FormEvent<HTMLFormElement>) => {
+            event.preventDefault()
+            if (connected && !busy) review.mutate()
+        },
+    }
+    const fields = (
+                <div className="collector-grid">
+                    <label className="collector-name"><span id="checkout-name-label">Nome de exibição</span><span aria-hidden="true" className="required-mark"> *</span><Input aria-labelledby="checkout-name-label" value={draft.name} required minLength={2} maxLength={80} autoComplete="name" disabled={busy} onChange={event => changeDraft({ name: event.target.value })} /></label>
+                    {readOnlyFields.slice(0, 7).map((field, index) => <label key={field.label} className={`collector-wallet-field collector-wallet-field-${index}`}><span id={`checkout-wallet-${index}-label`}>{field.label}</span><Input aria-labelledby={`checkout-wallet-${index}-label`} aria-describedby="wallet-data-help" value={field.value ?? ''} readOnly placeholder="Não informado" /></label>)}
+                    <label className="collector-email"><span id="checkout-email-label">E-mail</span><span aria-hidden="true" className="required-mark"> *</span><Input aria-labelledby="checkout-email-label" value={draft.email} type="email" required autoComplete="email" disabled={busy} onChange={event => changeDraft({ email: event.target.value })} /></label>
+                    <label className="collector-wallet-field collector-wallet-field-7"><span id="checkout-wallet-7-label">Nome ENS</span><Input aria-labelledby="checkout-wallet-7-label" aria-describedby="wallet-data-help" value={selectedWallet?.ens ?? ''} readOnly placeholder="Não informado" /></label>
                 </div>
-
-                <label className="block text-sm">
-                    Observações do colecionador (opcional)
-                    <textarea
-                        value={draft.notes}
-                        maxLength={1000}
-                        disabled={busy}
-                        className="mt-2 min-h-28 w-full rounded-md border border-input bg-background p-3"
-                        onChange={(event) => changeDraft({ notes: event.target.value })}
-                    />
-                </label>
-
-                <fieldset disabled={busy}>
-                    <legend className="font-bold">Carteira e rede</legend>
-
-                    <div className="mt-4 space-y-3">
-                        {wallets.data.map((wallet) => (
-                            <label
-                                key={wallet.id}
-                                className="flex cursor-pointer items-start gap-3 rounded-xl border border-border bg-card p-4"
-                            >
-                                <input
-                                    type="radio"
-                                    name="wallet"
-                                    value={wallet.id}
-                                    checked={draft.walletId === wallet.id}
-                                    required
-                                    className="mt-1"
-                                    onChange={() => changeDraft({ walletId: wallet.id })}
-                                />
-
-                                <span className="min-w-0">
-                                    <span className="block font-bold">{wallet.nickname}</span>
-                                    <span className="mt-1 block text-sm text-muted-foreground">
-                                        {wallet.provider} · {wallet.network}
-                                    </span>
-                                    <span className="mt-2 block break-all text-xs">
-                                        {wallet.address}
-                                    </span>
-                                </span>
-                            </label>
-                        ))}
-                    </div>
-                </fieldset>
-
-                <div className="flex flex-wrap items-center gap-4">
-                    <Button
-                        type="button"
-                        variant="outline"
-                        disabled={!draft.walletId || busy}
-                        onClick={() => connect.mutate(connected ? 'disconnect' : 'connect')}
-                    >
-                        {connect.isPending
-                            ? 'Aguarde...'
-                            : connected
-                                ? 'Desconectar carteira'
-                                : 'Conectar carteira'}
-                    </Button>
-
-                    <span role="status" className="text-sm">
-                        {connected ? 'Carteira conectada na simulação' : 'Carteira desconectada'}
-                    </span>
-                </div>
-
-                {connect.isError && (
-                    <p role="alert" className="text-sm">
-                        {errorMessage(connect.error)}
-                    </p>
-                )}
-
-                <Button type="submit" disabled={!connected || busy}>
-                    {review.isPending ? 'Calculando...' : 'Revisar compra'}
-                </Button>
-
-                <Link to="/wallets" className="ml-4 text-sm text-primary underline">
-                    Gerenciar carteiras
-                </Link>
-
-                {review.isError && (
-                    <p role="alert" className="text-sm">
-                        {errorMessage(review.error)}
-                    </p>
-                )}
-            </form>
-
-            <aside className="rounded-2xl bg-card p-5">
-                {review.isPending ? (
-                    <div role="status">
-                        <span className="sr-only">Calculando cotação</span>
-                        <div
-                            aria-hidden="true"
-                            className="catalog-shimmer h-72 rounded-xl"
-                        />
-                    </div>
-                ) : quote ? (
-                    <>
-                        <QuoteSummary quote={quote} />
-
-                        <p className="mt-5 text-sm">
-                            Colecionador: {draft.name}
-                        </p>
-                        <p className="mt-1 break-all text-xs text-muted-foreground">
-                            {draft.email}
-                        </p>
-
-                        <Button
-                            className="mt-6 w-full"
-                            disabled={!connected || busy}
-                            onClick={() => purchase.mutate({
-                                quoteId: quote.id,
-                                collector: {
-                                    name: draft.name.trim(),
-                                    email: draft.email.trim(),
-                                    notes: draft.notes.trim(),
-                                },
-                            })}
-                        >
-                            {purchase.isPending ? 'Enviando...' : 'Confirmar compra'}
-                        </Button>
-
-                        <p className="mt-3 text-xs text-muted-foreground">
-                            A cotação será revalidada antes do envio.
-                            Nenhum pagamento real será realizado.
-                        </p>
-                    </>
-                ) : (
-                    <p className="text-sm text-muted-foreground">
-                        Preencha os dados, conecte uma carteira e clique em
-                        “Revisar compra” para consultar os valores.
-                    </p>
-                )}
-
-                {purchase.isError && (
-                    <p role="alert" className="mt-4 text-sm">
-                        {errorMessage(purchase.error)}
-                    </p>
-                )}
-            </aside>
-        </div>
     )
+    const notes = (<>
+                <p id="wallet-data-help" className="wallet-data-help">Dados da carteira selecionada. <Link to="/wallets">Editar cadastro da carteira</Link></p>
+                <label className="collector-notes"><span id="checkout-notes-label">Observações do colecionador (opcional)</span><textarea aria-labelledby="checkout-notes-label" value={draft.notes} maxLength={1000} disabled={busy} onChange={event => changeDraft({ notes: event.target.value })} /></label>
+    </>)
+    const walletChoices = (
+            <section className="checkout-wallet-choice">
+                <div className="checkout-wallet-heading"><h2>{connected ? 'Carteira conectada' : 'Carteira cadastrada'}</h2><Link to="/wallets">Gerenciar carteiras</Link></div>
+                <fieldset className="checkout-wallets" disabled={busy}><legend className="sr-only">Selecionar carteira cadastrada</legend>
+                    {wallets.data.map(wallet => <label key={wallet.id} data-selected={walletId === wallet.id}><input type="radio" name="wallet" form="checkout-review-form" value={wallet.id} checked={walletId === wallet.id} required onChange={() => changeDraft({ walletId: wallet.id })} /><span><strong>{wallet.nickname}</strong><span className="wallet-short-address">{wallet.ens || `${wallet.address.slice(0, 6)}…${wallet.address.slice(-4)}`}</span><span>Rede {wallet.network}</span></span></label>)}
+                </fieldset>
+            </section>
+    )
+    const summaryTotals = review.isPending ? <div role="status"><span className="sr-only">Calculando cotação</span><div aria-hidden="true" className="catalog-shimmer h-40 rounded-xl" /></div> : quote ? <QuoteSummary quote={quote} /> : <CartTotals cart={previewCart} estimated />
+    const couponLink = <Link to="/cart" className="checkout-coupon-link">Tem um código promocional? Aplique no carrinho</Link>
+    const summary = <section className="checkout-summary" aria-labelledby="checkout-summary-title">
+        <h2 id="checkout-summary-title">Seus NFTs</h2>
+        {mobile ? <>{summaryTotals}<details className="checkout-mobile-items"><summary>Ver NFTs e taxas</summary><PurchaseLines lines={previewCart.lines} />{couponLink}</details></> : <><div className="checkout-desktop-items"><PurchaseLines lines={previewCart.lines} /></div>{couponLink}{summaryTotals}</>}
+        {!quote && <p className="quote-note">Estimativa do carrinho. Conecte a carteira e revise para calcular a taxa da rede selecionada.</p>}
+    </section>
+    const providers = (
+            <section className="checkout-wallet-section">
+                <h2 className="wallet-provider-title">Carteira e rede</h2>
+                <div className="checkout-providers">{walletProviders.map(provider => {
+                    const registered = wallets.data.find(wallet => wallet.provider === provider)
+                    const active = selectedWallet?.provider === provider
+                    return <button key={provider} type="button" disabled={busy || !registered} aria-pressed={active} onClick={() => { if (registered && !active) changeDraft({ walletId: registered.id }) }}><span className="provider-mark" aria-hidden="true">{provider === 'Coinbase Wallet' ? '▱' : provider[0]}</span><span>{provider}{!registered && <small>Sem carteira cadastrada</small>}</span><span className="provider-radio" aria-hidden="true">{active ? '◉' : '○'}</span></button>
+                })}</div>
+            </section>
+    )
+    const connectionControls = (<>
+                <div className="checkout-connection"><Button type="button" variant="outline" disabled={!walletId || busy} onClick={() => connect.mutate(connected ? 'disconnect' : 'connect')}>{connect.isPending ? 'Aguarde...' : connected ? 'Desconectar carteira' : 'Conectar carteira'}</Button><span role="status">{connected ? 'Carteira conectada na simulação' : 'Carteira desconectada'}</span></div>
+                {connect.isError && <p role="alert" className="commerce-feedback">{errorMessage(connect.error)}</p>}
+    </>)
+    const actions = (<>
+            <div className="checkout-actions">
+                <Button type="submit" form="checkout-review-form" variant="outline" disabled={!connected || busy}>{review.isPending ? 'Calculando...' : 'Revisar compra'}</Button>
+                {quote && <Button className="checkout-confirm" disabled={!connected || busy} onClick={() => purchase.mutate({ quoteId: quote.id, collector: { name: draft.name.trim(), email: draft.email.trim(), notes: draft.notes.trim() } })}>{purchase.isPending ? 'Enviando...' : 'Confirmar compra'}</Button>}
+            </div>
+            {quote && <p className="quote-note">Colecionador: {draft.name}<br />{draft.email}<br />A cotação será revalidada antes do envio. Nenhum pagamento real será realizado.</p>}
+            {review.isError && <p role="alert" className="commerce-feedback">{errorMessage(review.error)}</p>}
+            {purchase.isError && <p role="alert" className="commerce-feedback">{errorMessage(purchase.error)}</p>}
+    </>)
+    return <div className="checkout-grid">
+        {mobile ? <form {...formProps} className="collector-form checkout-mobile-form">
+            {walletChoices}{providers}{summary}{connectionControls}
+            <button type="button" className="collector-toggle" aria-expanded={profileOpen} aria-controls="collector-fields" onClick={() => setProfileOpen(!profileOpen)}>Dados do colecionador <span aria-hidden="true">{profileOpen ? '−' : '+'}</span></button>
+            <div id="collector-fields" className="collector-fields" data-open={profileOpen}>{fields}{notes}</div>
+            {actions}
+        </form> : <>
+            <form {...formProps} className="collector-form"><h2>Perfil do colecionador</h2>{fields}{walletChoices}{notes}</form>
+            <aside className="checkout-sidebar">{summary}{providers}{connectionControls}{actions}</aside>
+        </>}
+    </div>
 }

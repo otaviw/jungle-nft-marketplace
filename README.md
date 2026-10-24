@@ -188,7 +188,7 @@ As duas primeiras imagens também aparecem no hero. As quatro são reutilizadas 
 
 As referências usadas estão em `pages figma/Desktop` e `pages figma/Mobile`: início e detalhes do NFT. O link do Figma não pôde ser consultado neste ambiente; a composição foi comparada com os PNGs fornecidos. O conteúdo desktop tem largura máxima de 1200 px; foram conferidas também as larguras de 390 e 768 px.
 
-Home e detalhe usam header e footer próprios; conta, carrinho e checkout mantêm suas composições anteriores. As mudanças compartilhadas ficam nos tokens de cor e tipografia. Busca, filtros e paginação continuam na URL, e a escolha de edição agora usa rádios no formato de pills. O botão “Comprar NFT” continua adicionando ao carrinho; não confirma uma compra.
+Home e detalhe usam o header e footer do marketplace. Carrinho, checkout e recibo agora reutilizam esses componentes; as telas de conta mantêm suas composições anteriores. As mudanças compartilhadas ficam nos tokens de cor e tipografia. Busca, filtros e paginação continuam na URL, e a escolha de edição usa rádios no formato de pills. O botão “Comprar NFT” continua adicionando ao carrinho; não confirma uma compra.
 
 A galeria tem quatro recortes selecionáveis da própria imagem e ampliação em diálogo, com fechamento por Escape e retorno do foco. No desktop, as miniaturas ficam ao lado da obra; no mobile, ficam no diálogo aberto ao tocar a imagem. O diálogo explica que os recortes pertencem à mesma imagem: não há fotografias alternativas fornecidas. Avaliações, contratos blockchain, atributos e contagens ilustrativas do Figma não foram transformados em dados fictícios novos: a tela usa os dados reais das fixtures e informa a ausência de avaliações. Newsletter e leitura editorial não enviam inscrições nem simulam sucesso; os destinos auxiliares não implementados são apresentados como texto.
 
@@ -211,6 +211,20 @@ No Windows, `scripts/compare-visual.ps1` monta os PNGs de referência e implemen
 Diferenças ainda conhecidas: a fonte exata não foi identificada; o catálogo tem as três categorias, duas edições e 24 NFTs das fixtures; não há dados de popularidade ou datas para ativar “Em alta” e “Novos lançamentos”. A API atual também não aceita intervalo de preços: a ordenação por preço continua disponível, sem simular um filtro que não existe. A composição de 768 px é uma adaptação, pois não há frame específico de tablet.
 
 Capturas, medidas e lista dos arquivos alterados estão em [docs/visual-review.md](docs/visual-review.md).
+
+### Carrinho, checkout e recibo
+
+Carrinho e checkout seguem os frames de `Carrinho de NFTs.png` e `Pagamento.png`, nas versões desktop e mobile. Não há frame específico de recibo na pasta; sua composição usa o mesmo resumo, tipografia e identidade, com estados pendente, confirmado, recusado e erro de consulta.
+
+No checkout, nome e e-mail iniciais vêm de `GET /api/profile`. Um draft existente tem prioridade e continua em `sessionStorage`, separado por usuário. Os demais campos mostram os dados da carteira cadastrada selecionada: apelido, rede, nome do perfil, endereço, provedor, indicação e ENS. São leituras; o link de edição leva a `/wallets`. O campo “Outra carteira” mostra o outro cadastro, quando existe. Não há envio de campos decorativos, nem alteração automática do perfil ou da carteira.
+
+A carteira principal é selecionada inicialmente; uma conexão existente ou escolha salva no draft tem prioridade. Os botões de provedor selecionam uma carteira já cadastrada desse tipo. Provedores sem cadastro ficam indisponíveis. Conectar, revisar a cotação e confirmar continuam sendo etapas distintas e simuladas. O resumo anterior à revisão é uma estimativa do carrinho; a cotação revisada contém a taxa da carteira escolhida. O recibo usa `order.collector` e `order.snapshot`, sem consultar o cadastro atual para reescrever uma compra passada. Os contratos REST não precisaram mudar.
+
+No mobile, “Ver NFTs e taxas” expande o resumo e “Dados do colecionador” expande o perfil. Dados inválidos reabrem o perfil e recebem foco antes de permitir a revisão. A barra de ações tem espaço reservado; em altura disponível de até 500 px, volta ao fluxo para evitar cobrir o formulário. A ordem do DOM acompanha a composição mobile e os campos não usam `tabindex` positivo.
+
+`node scripts/commerce-review.mjs` captura as três telas em 390, 414, 768 e 1440 px, além de estados vazio, carregando, erro e recusado em 390/1440. O setup das capturas usa os endpoints MSW com usuários fictícios, sem alterar fixtures. Saída: `artifacts/visual-review/commerce-current`. `scripts/compare-commerce.ps1` monta as comparações lado a lado com os quatro frames fornecidos. Os scripts aceitam `VISUAL_REVIEW_URL`, `VISUAL_REVIEW_WIDTHS` e `VISUAL_REVIEW_OUTPUT`.
+
+`node scripts/audit-horizontal.mjs` verifica as bordas dos elementos e a largura do documento em 390, 414 e 768 px, com filtros, diálogos de conta/autenticação/galeria e seções do checkout abertas. Inclui gestos de toque horizontais e registra `scrollX`. `VISUAL_REVIEW_BROWSER` permite indicar um executável Chromium compatível, como Opera GX, sempre com perfil temporário isolado. Resultados e limitações da revisão ficam em [docs/commerce-review.md](docs/commerce-review.md). Não há corte horizontal aplicado a `html` ou `body` para ocultar conteúdo.
 
 ## Preparação para Vercel
 

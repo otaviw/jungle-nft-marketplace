@@ -116,7 +116,7 @@ export function CatalogRealtime() {
             <p>{message}</p>
             <button
                 type="button"
-                className="mt-2 text-primary underline"
+                className="pointer-events-auto mt-2 text-primary underline"
                 onClick={() => setMessage('')}
             >
                 Fechar aviso

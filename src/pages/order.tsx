@@ -2,7 +2,9 @@ import { useEffect } from 'react'
 import axios from 'axios'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { Link, useParams } from '@tanstack/react-router'
-import { Header } from '@/components/layout/header'
+import { CommerceLayout } from '@/components/layout/commerce-layout'
+import { CartTotals, PurchaseLines } from '@/components/checkout/purchase-summary'
+import { Check, Clock3, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { api } from '@/lib/api'
 import { sessionOptions } from '@/lib/session'
@@ -70,186 +72,36 @@ export function OrderPage() {
     const notFound = axios.isAxiosError(order.error)
         && order.error.response?.status === 404
 
-    return (
-        <>
-            <Header />
-
-            <main className="mx-auto max-w-2xl px-5 py-10">
-                <p role="status" className="mb-5 text-xs text-muted-foreground">
-                    {realtimeMessage}
-                </p>
-                {order.isPending && (
-                    <div role="status">
-                        <span className="sr-only">Consultando pedido</span>
-                        <div
-                            aria-hidden="true"
-                            className="catalog-shimmer h-96 rounded-2xl"
-                        />
-                    </div>
-                )}
-
-                {order.isError && (
-                    <section role="alert" className="rounded-xl bg-card p-6">
-                        <h1 className="text-xl font-bold">
-                            {notFound
-                                ? 'Pedido não encontrado'
-                                : 'Não foi possível consultar o pedido'}
-                        </h1>
-
-                        <p className="mt-3 text-sm text-muted-foreground">
-                            Nenhuma nova compra será criada ao tentar consultar novamente.
-                        </p>
-
-                        {!notFound && (
-                            <Button
-                                className="mt-5"
-                                onClick={() => void order.refetch()}
-                            >
-                                Consultar novamente
-                            </Button>
-                        )}
-                    </section>
-                )}
-
-                {order.data && (
-                    <section className="rounded-2xl border-b-4 border-primary bg-card p-6 md:p-8">
-                        <div role="status" aria-live="polite">
-                            <h1 className="text-center text-xl font-bold">
-                                {status === 'confirmed'
-                                    ? 'Seus NFTs agora estão na sua carteira'
-                                    : status === 'declined'
-                                        ? 'Pagamento recusado'
-                                        : 'Aguardando confirmação'}
-                            </h1>
-
-                            {status === 'pending' && (
-                                <p className="mt-4 text-center text-sm text-muted-foreground">
-                                    Estamos consultando o resultado da simulação.
-                                    Você pode atualizar esta página sem criar outra compra.
-                                </p>
-                            )}
-
-                            {status === 'declined' && (
-                                <p className="mt-4 text-center text-sm">
-                                    {order.data.rejectionReason}
-                                    {' '}Os itens desta tentativa não foram removidos do carrinho.
-                                </p>
-                            )}
-                        </div>
-
-                        <p className="mt-6 break-all text-xs text-muted-foreground">
-                            Pedido: {order.data.id}
-                        </p>
-
-                        {status === 'confirmed' && (
-                            <>
-                                <dl className="mt-5 grid gap-4 border-y border-border py-4 text-xs sm:grid-cols-2">
-                                    <div>
-                                        <dt className="text-muted-foreground">Transação simulada</dt>
-                                        <dd className="mt-1 break-all">
-                                            {order.data.transactionId}
-                                        </dd>
-                                    </div>
-
-                                    <div>
-                                        <dt className="text-muted-foreground">Data</dt>
-                                        <dd className="mt-1">
-                                            {new Date(order.data.updatedAt).toLocaleString('pt-BR')}
-                                        </dd>
-                                    </div>
-
-                                    <div>
-                                        <dt className="text-muted-foreground">Carteira</dt>
-                                        <dd className="mt-1">
-                                            {order.data.snapshot.wallet.nickname}
-                                        </dd>
-                                    </div>
-
-                                    <div>
-                                        <dt className="text-muted-foreground">Rede</dt>
-                                        <dd className="mt-1">
-                                            {order.data.snapshot.wallet.network}
-                                        </dd>
-                                    </div>
-                                </dl>
-
-                                <h2 className="mt-6 font-bold">Detalhes da transação</h2>
-
-                                <ul className="mt-4 space-y-4">
-                                    {order.data.snapshot.cart.lines.map((item) => (
-                                        <li
-                                            key={`${item.nftId}:${item.editionId}`}
-                                            className="flex items-center gap-3"
-                                        >
-                                            <img
-                                                src={item.image}
-                                                alt=""
-                                                width={56}
-                                                height={56}
-                                                className="size-14 rounded-lg object-cover"
-                                            />
-
-                                            <div className="min-w-0 flex-1 text-sm">
-                                                <p>{item.name}</p>
-                                                <p className="mt-1 text-xs text-muted-foreground">
-                                                    {item.editionName} × {item.quantity}
-                                                </p>
-                                            </div>
-
-                                            <span className="text-sm text-primary">
-                                                {item.subtotal} ETH
-                                            </span>
-                                        </li>
-                                    ))}
-                                </ul>
-
-                                <dl className="mt-6 space-y-3 border-t border-border pt-5 text-sm">
-                                    <div className="flex justify-between gap-4">
-                                        <dt>Subtotal</dt>
-                                        <dd>{order.data.snapshot.cart.subtotal} ETH</dd>
-                                    </div>
-
-                                    <div className="flex justify-between gap-4">
-                                        <dt>Desconto</dt>
-                                        <dd>− {order.data.snapshot.cart.discount} ETH</dd>
-                                    </div>
-
-                                    <div className="flex justify-between gap-4">
-                                        <dt>Taxa de rede</dt>
-                                        <dd>{order.data.snapshot.cart.networkFee} ETH</dd>
-                                    </div>
-
-                                    <div className="flex justify-between gap-4 font-bold">
-                                        <dt>Total</dt>
-                                        <dd className="text-primary">
-                                            {order.data.snapshot.cart.total} ETH
-                                        </dd>
-                                    </div>
-                                </dl>
-
-                                <p className="mt-5 text-xs text-muted-foreground">
-                                    Compra e transação simuladas. Nenhum ativo foi transferido
-                                    em uma blockchain real.
-                                </p>
-                            </>
-                        )}
-
-                        <div className="mt-8 flex flex-wrap justify-center gap-5 text-sm">
-                            <Link
-                                to="/"
-                                search={parseCatalogSearch({})}
-                                className="text-primary underline"
-                            >
-                                Explorar NFTs
-                            </Link>
-
-                            <Link to="/cart" className="text-primary underline">
-                                Ver carrinho
-                            </Link>
-                        </div>
-                    </section>
-                )}
-            </main>
-        </>
-    )
+    return <CommerceLayout title="Recibo da compra" step="receipt">
+        <p role="status" className="receipt-realtime">{realtimeMessage}</p>
+        {order.isPending && <div role="status" className="commerce-loading"><span className="sr-only">Consultando pedido</span><div aria-hidden="true" className="catalog-shimmer h-96 rounded-2xl" /></div>}
+        {order.isError && <section role="alert" className="commerce-state"><h1>{notFound ? 'Pedido não encontrado' : 'Não foi possível consultar o pedido'}</h1><p>Nenhuma nova compra será criada ao tentar consultar novamente.</p>{!notFound && <Button onClick={() => void order.refetch()}>Consultar novamente</Button>}<Link to="/cart" className="text-primary underline">Ver carrinho</Link></section>}
+        {order.data && <article className="receipt" data-status={status}>
+            <header className="receipt-heading" role="status" aria-live="polite">
+                <span className="receipt-status-icon" aria-hidden="true">{status === 'confirmed' ? <Check /> : status === 'declined' ? <X /> : <Clock3 />}</span>
+                <h1>{status === 'confirmed' ? 'Seus NFTs agora estão na sua carteira' : status === 'declined' ? 'Pagamento recusado' : 'Aguardando confirmação'}</h1>
+                {status === 'pending' && <p>Estamos consultando o resultado da simulação. Você pode atualizar esta página sem criar outra compra.</p>}
+                {status === 'declined' && <p>{order.data.rejectionReason} Os itens desta tentativa não foram removidos do carrinho.</p>}
+                {status === 'confirmed' && <p>Compra confirmada na simulação. Confira os dados do seu pedido.</p>}
+            </header>
+            <div className="receipt-grid">
+                <section aria-labelledby="receipt-details-title"><h2 id="receipt-details-title">Detalhes da transação</h2>
+                    <dl className="receipt-details">
+                        <div><dt>Pedido</dt><dd>{order.data.id}</dd></div>
+                        <div><dt>Data</dt><dd>{new Date(order.data.updatedAt).toLocaleString('pt-BR')}</dd></div>
+                        {status === 'confirmed' && <div className="receipt-transaction"><dt>Transação simulada</dt><dd>{order.data.transactionId}</dd></div>}
+                        <div><dt>Colecionador</dt><dd>{order.data.collector.name}</dd></div>
+                        <div><dt>E-mail</dt><dd>{order.data.collector.email}</dd></div>
+                        <div><dt>Carteira</dt><dd>{order.data.snapshot.wallet.nickname}</dd></div>
+                        <div><dt>Rede</dt><dd>{order.data.snapshot.wallet.network}</dd></div>
+                        <div className="receipt-address"><dt>Endereço da carteira</dt><dd>{order.data.snapshot.wallet.address}</dd></div>
+                        {order.data.collector.notes && <div className="receipt-notes"><dt>Observações do colecionador</dt><dd>{order.data.collector.notes}</dd></div>}
+                    </dl>
+                    <p className="receipt-disclaimer">Compra e transação simuladas. Nenhum ativo foi transferido em uma blockchain real.</p>
+                </section>
+                <section className="receipt-summary" aria-labelledby="receipt-summary-title"><h2 id="receipt-summary-title">Seus NFTs</h2><PurchaseLines lines={order.data.snapshot.cart.lines} /><CartTotals cart={order.data.snapshot.cart} /></section>
+            </div>
+            <nav className="receipt-actions" aria-label="Próximos passos"><Link to="/" search={parseCatalogSearch({})} className="market-cta">Explorar NFTs</Link><Link to="/cart">Ver carrinho</Link></nav>
+        </article>}
+    </CommerceLayout>
 }

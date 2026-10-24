@@ -265,5 +265,7 @@ test('detalhe recebe alterações de preço sem atualizar a página', async ({
     })
 
     await expect(purchaseForm).not.toContainText('2.25 ETH')
+    await page.getByRole('button', { name: 'Fechar aviso', exact: true }).click()
+    await expect(page.getByRole('button', { name: 'Fechar aviso', exact: true })).toHaveCount(0)
     await expect(page).toHaveURL(/\/nfts\/nft-001$/)
 })
