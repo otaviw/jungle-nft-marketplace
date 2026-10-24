@@ -140,6 +140,7 @@ export function ProfilePage() {
                                             )}
 
                                             <Input
+                                                aria-labelledby={`profile-${field.name}-label`}
                                                 name={field.name}
                                                 type={field.name === 'email' ? 'email' : 'text'}
                                                 autoComplete={

@@ -76,6 +76,10 @@ test('perfil rejeita ENS inválido e e-mail de outra conta', async ({
     await save.click()
 
     await expect(ens).toHaveAttribute('aria-invalid', 'true')
+    await expect(ens).toHaveAccessibleName('Nome ENS')
+    await expect(ens).toHaveAccessibleDescription(
+        'Informe um nome terminado em .eth.',
+    )
 
     await expect(profile.getByText(
         'Informe um nome terminado em .eth.',
@@ -91,6 +95,8 @@ test('perfil rejeita ENS inválido e e-mail de outra conta', async ({
     )
 
     await expect(email).toHaveAttribute('aria-invalid', 'true')
+    await expect(email).toHaveAccessibleName('E-mail')
+    await expect(email).toHaveAccessibleDescription('Escolha outro e-mail.')
 
     // Nenhuma das tentativas inválidas deve ser persistida.
     await page.reload()
